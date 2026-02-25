@@ -1,0 +1,22 @@
+{
+  "name": "calendar-memo",
+  "version": "1.0.0",
+  "description": "Personal calendar memo system with OKR management",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm run --parallel dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:server": "pnpm --filter server dev",
+    "build": "pnpm --filter web build && pnpm --filter server build",
+    "start": "pnpm --filter server start",
+    "lint": "pnpm -r lint",
+    "type-check": "pnpm -r type-check"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
