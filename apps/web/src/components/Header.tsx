@@ -8,6 +8,7 @@ export function Header() {
     setViewMode, 
     selectedDate, 
     setSelectedDate,
+    setHighlightToday,
     openDetailPanel,
     selectMemo,
   } = useMemoStore();
@@ -29,7 +30,9 @@ export function Header() {
   };
 
   const handleToday = () => {
-    setSelectedDate(new Date());
+    const today = new Date();
+    setSelectedDate(today);
+    setHighlightToday(true);
   };
 
   const handleCreate = () => {
@@ -47,6 +50,7 @@ export function Header() {
         {/* 左侧：导航按钮 */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
+            {/* 上一个 */}
             <button 
               onClick={handlePrev}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -55,6 +59,16 @@ export function Header() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
+
+            {/* Today 按钮 */}
+            <button 
+              onClick={handleToday}
+              className="px-4 py-2 text-sm font-medium text-white bg-green-500 hover:bg-green-600 rounded-lg transition-colors shadow-sm"
+            >
+              Today
+            </button>
+
+            {/* 下一个 */}
             <button 
               onClick={handleNext}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -64,13 +78,6 @@ export function Header() {
               </svg>
             </button>
           </div>
-
-          <button 
-            onClick={handleToday}
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            &lt; Today &gt;
-          </button>
 
           <h1 className="text-xl font-semibold text-gray-900 min-w-[150px]">
             {dateDisplay}

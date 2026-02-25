@@ -18,6 +18,7 @@ export interface Tag {
   name: string;
   color?: string;
   createdAt: string;
+  count?: number; // 后端统计的标签使用次数
 }
 
 export interface Memo {

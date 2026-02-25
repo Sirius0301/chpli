@@ -126,8 +126,8 @@ export function DetailPanel() {
     setIsUploading(true);
     try {
       const response = await uploadApi.uploadImage(file);
-      if (response.success) {
-        setFormData(prev => ({ ...prev, imageUrl: response.data.url }));
+      if (response.success && response.data) {
+        setFormData(prev => ({ ...prev, imageUrl: response.data!.url }));
       }
     } catch (err) {
       alert('图片上传失败');

@@ -9,9 +9,10 @@ function cn(...inputs: ClassValue[]) {
 
 interface MemoItemProps {
   memo: MemoWithInstance;
+  isHighlighted?: boolean;
 }
 
-export function MemoItem({ memo }: MemoItemProps) {
+export function MemoItem({ memo, isHighlighted = false }: MemoItemProps) {
   const { 
     toggleMemoComplete, 
     selectMemo, 
@@ -48,7 +49,8 @@ export function MemoItem({ memo }: MemoItemProps) {
         "memo-item group flex items-start gap-2 px-2 py-1.5 rounded text-sm hover:bg-white hover:shadow-sm transition-all border-l-2 cursor-pointer",
         memo.completed ? 'opacity-50' : 'opacity-100',
         memo.priority ? priorityColors[memo.priority] : 'border-l-transparent',
-        memo.isRepeatInstance ? 'bg-gray-50' : 'bg-white'
+        memo.isRepeatInstance ? 'bg-gray-50' : 'bg-white',
+        isHighlighted && 'bg-green-100 shadow-md ring-1 ring-green-300'
       )}
       onClick={handleClick}
     >

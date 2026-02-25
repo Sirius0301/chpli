@@ -13,7 +13,10 @@ interface DayCellProps {
 }
 
 export function DayCell({ date, memos, isWeekView, isCurrentMonth = true, isToday = false }: DayCellProps) {
-  const { setSelectedDate, openDetailPanel, selectMemo } = useMemoStore();
+  const { setSelectedDate, openDetailPanel, selectMemo, isHighlightToday } = useMemoStore();
+  
+  // 判断是否要高亮今天的备忘录
+  const shouldHighlightMemos = isHighlightToday && isToday && memos.length > 0;
   const lunar = getLunarDate(date);
 
   const handleClick = () => {
@@ -58,9 +61,13 @@ export function DayCell({ date, memos, isWeekView, isCurrentMonth = true, isToda
       </div>
 
       {/* 备忘录列表 */}
-      <div className="space-y-1">
+      <div className={`space-y-1 ${shouldHighlightMemos ? 'ring-2 ring-green-400 ring-offset-1 rounded-md p-1 bg-green-50/50' : ''}`}>
         {displayMemos.map((memo) => (
-          <MemoItem key={`${memo.id}-${memo.instanceDate || memo.date}`} memo={memo} />
+          <MemoItem 
+            key={`${memo.id}-${memo.instanceDate || memo.date}`} 
+            memo={memo} 
+            isHighlighted={shouldHighlightMemos}
+          />
         ))}
         {hasMore && (
           <div className="text-xs text-gray-400 px-2 py-1">

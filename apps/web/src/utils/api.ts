@@ -9,7 +9,7 @@ const api = axios.create({
   },
 });
 
-// 响应拦截器
+// 响应拦截器 - 直接返回 data
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {
@@ -23,37 +23,37 @@ api.interceptors.response.use(
 // Memos API
 export const memoApi = {
   getAll: (params?: { startDate?: string; endDate?: string; tags?: string[]; priorities?: string[] }) => 
-    api.get<ApiResponse<Memo[]>>('/memos', { params }),
+    api.get<any, ApiResponse<Memo[]>>('/memos', { params }),
 
   getById: (id: string) => 
-    api.get<ApiResponse<Memo>>(`/memos/${id}`),
+    api.get<any, ApiResponse<Memo>>(`/memos/${id}`),
 
   create: (data: CreateMemoDTO) => 
-    api.post<ApiResponse<Memo>>('/memos', data),
+    api.post<any, ApiResponse<Memo>>('/memos', data),
 
   update: (id: string, data: UpdateMemoDTO) => 
-    api.put<ApiResponse<Memo>>(`/memos/${id}`, data),
+    api.put<any, ApiResponse<Memo>>(`/memos/${id}`, data),
 
   delete: (id: string) => 
-    api.delete<ApiResponse<void>>(`/memos/${id}`),
+    api.delete<any, ApiResponse<void>>(`/memos/${id}`),
 
   toggleComplete: (id: string) => 
-    api.patch<ApiResponse<{ completed: boolean }>>(`/memos/${id}/toggle`),
+    api.patch<any, ApiResponse<{ completed: boolean }>>(`/memos/${id}/toggle`),
 };
 
 // Tags API
 export const tagApi = {
   getAll: () => 
-    api.get<ApiResponse<Tag[]>>('/tags'),
+    api.get<any, ApiResponse<Tag[]>>('/tags'),
 
   create: (data: { name: string; color?: string }) => 
-    api.post<ApiResponse<Tag>>('/tags', data),
+    api.post<any, ApiResponse<Tag>>('/tags', data),
 
   update: (id: string, data: { name?: string; color?: string }) => 
-    api.put<ApiResponse<Tag>>(`/tags/${id}`, data),
+    api.put<any, ApiResponse<Tag>>(`/tags/${id}`, data),
 
   delete: (id: string) => 
-    api.delete<ApiResponse<void>>(`/tags/${id}`),
+    api.delete<any, ApiResponse<void>>(`/tags/${id}`),
 };
 
 // Upload API
@@ -61,7 +61,7 @@ export const uploadApi = {
   uploadImage: (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    return api.post<ApiResponse<{ url: string; filename: string; size: number }>>('/upload', formData, {
+    return api.post<any, ApiResponse<{ url: string; filename: string; size: number }>>('/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },

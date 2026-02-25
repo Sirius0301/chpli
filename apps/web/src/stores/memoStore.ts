@@ -15,6 +15,7 @@ interface MemoState {
   selectedDate: Date;
   selectedMemoId: string | null;
   isDetailPanelOpen: boolean;
+  isHighlightToday: boolean; // 高亮今天的备忘录
 
   // 筛选状态
   selectedTags: string[];
@@ -27,6 +28,7 @@ interface MemoState {
   // Actions
   setViewMode: (mode: ViewMode) => void;
   setSelectedDate: (date: Date) => void;
+  setHighlightToday: (value: boolean) => void;
   selectMemo: (id: string | null) => void;
   openDetailPanel: () => void;
   closeDetailPanel: () => void;
@@ -57,6 +59,7 @@ export const useMemoStore = create<MemoState>()(
         selectedDate: new Date(),
         selectedMemoId: null,
         isDetailPanelOpen: false,
+        isHighlightToday: false,
         selectedTags: [],
         selectedPriorities: [],
         isLoading: false,
@@ -69,9 +72,11 @@ export const useMemoStore = create<MemoState>()(
         },
 
         setSelectedDate: (date) => {
-          set({ selectedDate: date });
+          set({ selectedDate: date, isHighlightToday: false });
           get().expandMemosForRange();
         },
+
+        setHighlightToday: (value) => set({ isHighlightToday: value }),
 
         selectMemo: (id) => set({ selectedMemoId: id }),
 
