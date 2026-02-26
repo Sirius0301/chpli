@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表
+model User {
+  id           String    @id @default(uuid())
+  email        String?   @unique
+  phone        String?   @unique
+  password     String
+  name         String
+  avatar       String?
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // 关联
+  memos        Memo[]
+  verificationCodes VerificationCode[]
+
+  @@index([email])
+  @@index([phone])
+  @@map("users")
+}
+
+// 验证码表
+model VerificationCode {
+  id        String   @id @default(uuid())
+  email     String?
+  phone     String?
+  code      String   @db.VarChar(6)
+  type      CodeType // register, reset_password, change_password
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  
+  // 关联用户（可选，用于修改密码时验证）
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([email, type, createdAt])
+  @@index([phone, type, createdAt])
+  @@map("verification_codes")
+}
+
+enum CodeType {
+  REGISTER
+  RESET_PASSWORD
+  CHANGE_PASSWORD
+}
+
+// 备忘录表（更新，关联用户）
+model Memo {
+  id            String       @id @default(uuid())
+  title         String
+  description   String?
+  location      String?
+  date          String       // YYYY-MM-DD
+  completed     Boolean      @default(false)
+  repeatType    RepeatType   @default(NONE)
+  repeatEndType RepeatEndType @default(NEVER)
+  repeatEndDate String?      // YYYY-MM-DD
+  priority      Priority?
+  imageUrl      String?
+  
+  // 关联用户
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // 关联标签
+  tags          Tag[]
+  
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([userId, date])
+  @@index([userId, completed])
+  @@map("memos")
+}
+
+// 标签表（更新，关联用户）
+model Tag {
+  id        String   @id @default(uuid())
+  name      String
+  color     String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memos     Memo[]
+  createdAt DateTime @default(now())
+
+  @@unique([userId, name])
+  @@map("tags")
+}
+
+enum RepeatType {
+  NONE
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  SEMIANNUAL
+  YEARLY
+}
+
+enum RepeatEndType {
+  NEVER
+  ONDATE
+}
+
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+}
