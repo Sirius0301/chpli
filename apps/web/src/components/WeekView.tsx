@@ -43,6 +43,7 @@ export function WeekView() {
             date={day} 
             memos={expandedMemos.filter(m => isSameDay(new Date(m.date), day))}
             isWeekView={true}
+            isToday={isSameDay(day, new Date())}
           />
         ))}
       </div>

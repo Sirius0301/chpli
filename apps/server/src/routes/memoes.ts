@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
+import { existsSync, unlinkSync } from 'fs';
+import { join } from 'path';
 import { db, statements, rowToMemo } from '../db';
 import type { CreateMemoDTO, UpdateMemoDTO } from '@calendar-memo/types';
 
@@ -170,9 +172,25 @@ router.delete('/:id', (req, res) => {
       return res.status(404).json({ success: false, error: 'MEMO_NOT_FOUND' });
     }
 
+    // 删除关联的图片文件（如果存在）
+    const memo = rowToMemo(existing);
+    if (memo.imageUrl) {
+      const filename = memo.imageUrl.replace('/uploads/', '');
+      const imagePath = join(process.cwd(), 'uploads', filename);
+      if (existsSync(imagePath)) {
+        try {
+          unlinkSync(imagePath);
+        } catch (err) {
+          console.error('[Delete Memo] Failed to delete image:', err);
+          // 图片删除失败不影响备忘录删除
+        }
+      }
+    }
+
     statements.deleteMemo.run({ id });
     res.json({ success: true, message: '删除成功' });
   } catch (error) {
+    console.error('[DELETE /memos/:id]', error);
     res.status(500).json({ success: false, error: 'INTERNAL_ERROR' });
   }
 });
