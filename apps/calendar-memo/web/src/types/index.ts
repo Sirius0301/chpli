@@ -7,7 +7,7 @@ export interface MemoFormData {
   location: string;
   date: string;
   completed: boolean;
-  repeatType: 'none' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'yearly';
+  repeatType: 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'yearly';
   repeatEndType: 'never' | 'onDate';
   repeatEndDate: string;
   priority: 'high' | 'medium' | 'low' | '';

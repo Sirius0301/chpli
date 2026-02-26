@@ -7,6 +7,7 @@ import type { Memo, CreateMemoDTO } from '@chpli/calendar-memo-shared';
 
 const repeatOptions = [
   { value: 'none', label: '不重复' },
+  { value: 'daily', label: '每天' },
   { value: 'weekly', label: '每周' },
   { value: 'biweekly', label: '每两周' },
   { value: 'monthly', label: '每月' },

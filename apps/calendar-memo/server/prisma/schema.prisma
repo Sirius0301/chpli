@@ -101,6 +101,7 @@ model Tag {
 
 enum RepeatType {
   NONE
+  DAILY
   WEEKLY
   BIWEEKLY
   MONTHLY

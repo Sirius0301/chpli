@@ -5,7 +5,7 @@
 
 // ==================== 基础枚举 ====================
 
-export type RepeatType = 'none' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'yearly';
+export type RepeatType = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'yearly';
 
 export type RepeatEndType = 'never' | 'onDate';
 

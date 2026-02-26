@@ -109,6 +109,7 @@ model Memo {
 
 enum RepeatType {
   NONE         // 不重复
+  DAILY        // 每天
   WEEKLY       // 每周
   BIWEEKLY     // 每两周
   MONTHLY      // 每月

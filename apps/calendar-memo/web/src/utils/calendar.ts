@@ -72,6 +72,10 @@ export function isMemoMatchDate(memo: Memo, targetDate: Date): boolean {
   if (memo.repeatType === 'none') return false;
 
   switch (memo.repeatType) {
+    case 'daily':
+      // 每天重复，只要目标日期在开始日期之后且在结束日期之前即可
+      return true;
+
     case 'weekly':
       return target.getDay() === start.getDay() && 
              differenceInWeeks(target, start) % 1 === 0;
