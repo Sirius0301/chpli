@@ -1,7 +1,7 @@
 import { useMemoStore } from '@/stores/memoStore';
 import { getWeekDays, formatDate } from '@/utils/calendar';
 import { DayCell } from './DayCell';
-import { isSameDay } from 'date-fns';
+import { isSameDay, isToday } from 'date-fns';
 
 export function WeekView() {
   const { selectedDate, expandedMemos } = useMemoStore();
@@ -15,19 +15,21 @@ export function WeekView() {
       {/* 表头 */}
       <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
         {weekDays.map((day, index) => {
-          const isToday = isSameDay(day, new Date());
+          const dayIsToday = isToday(day);
           return (
             <div 
               key={index} 
-              className={`py-3 text-center border-r border-gray-200 last:border-r-0 ${
-                isToday ? 'bg-green-50' : ''
+              className={`py-3 text-center border-r border-gray-200 last:border-r-0 transition-colors ${
+                dayIsToday ? 'bg-green-100' : ''
               }`}
             >
-              <div className="text-xs text-gray-500 mb-1">{weekDays_zh[index]}</div>
-              <div className={`text-sm font-medium ${isToday ? 'text-green-600' : 'text-gray-900'}`}>
+              <div className={`text-xs mb-1 ${dayIsToday ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
+                {weekDays_zh[index]}
+              </div>
+              <div className={`text-sm font-medium ${dayIsToday ? 'text-green-600' : 'text-gray-900'}`}>
                 {formatDate(day).split('-')[2]}日
               </div>
-              <div className="text-xs text-gray-400 mt-0.5">
+              <div className={`text-xs mt-0.5 ${dayIsToday ? 'text-green-500' : 'text-gray-400'}`}>
                 {weekDays_cn[index]}
               </div>
             </div>
@@ -43,7 +45,7 @@ export function WeekView() {
             date={day} 
             memos={expandedMemos.filter(m => isSameDay(new Date(m.date), day))}
             isWeekView={true}
-            isToday={isSameDay(day, new Date())}
+            isToday={isToday(day)}
           />
         ))}
       </div>

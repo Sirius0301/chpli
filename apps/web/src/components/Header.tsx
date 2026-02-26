@@ -8,7 +8,7 @@ export function Header() {
     setViewMode, 
     selectedDate, 
     setSelectedDate,
-    setHighlightToday,
+    selectToday,
     openDetailPanel,
     selectMemo,
   } = useMemoStore();
@@ -34,9 +34,7 @@ export function Header() {
   };
 
   const handleToday = () => {
-    const today = new Date();
-    setSelectedDate(today);
-    setHighlightToday(true);
+    selectToday();
   };
 
   const handleCreate = () => {

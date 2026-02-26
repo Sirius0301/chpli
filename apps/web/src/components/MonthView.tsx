@@ -1,7 +1,7 @@
 import { useMemoStore } from '@/stores/memoStore';
 import { getMonthDays, formatDate } from '@/utils/calendar';
 import { DayCell } from './DayCell';
-import { isSameDay, isToday as isDateToday, format } from 'date-fns';
+import { isSameDay, isToday, format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
 export function MonthView() {
@@ -30,7 +30,7 @@ export function MonthView() {
           <div key={weekIndex} className="flex-1 grid grid-cols-7 divide-x divide-gray-200 min-h-0">
             {week.map((day, dayIndex) => {
               const isCurrentMonth = format(day, 'M') === format(selectedDate, 'M');
-              const isToday = isDateToday(day);
+              const dayIsToday = isToday(day);
 
               return (
                 <DayCell 
@@ -39,7 +39,7 @@ export function MonthView() {
                   memos={expandedMemos.filter(m => isSameDay(new Date(m.date), day))}
                   isWeekView={false}
                   isCurrentMonth={isCurrentMonth}
-                  isToday={isToday}
+                  isToday={dayIsToday}
                 />
               );
             })}

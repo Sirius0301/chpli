@@ -29,6 +29,7 @@ interface MemoState {
   setViewMode: (mode: ViewMode) => void;
   setSelectedDate: (date: Date) => void;
   setHighlightToday: (value: boolean) => void;
+  selectToday: () => void;
   selectMemo: (id: string | null) => void;
   openDetailPanel: () => void;
   closeDetailPanel: () => void;
@@ -77,6 +78,12 @@ export const useMemoStore = create<MemoState>()(
         },
 
         setHighlightToday: (value) => set({ isHighlightToday: value }),
+
+        selectToday: () => {
+          const today = new Date();
+          set({ selectedDate: today, isHighlightToday: true });
+          get().expandMemosForRange();
+        },
 
         selectMemo: (id) => set({ selectedMemoId: id }),
 
@@ -163,10 +170,11 @@ export const useMemoStore = create<MemoState>()(
             expanded.push(...instances);
           }
 
-          // 应用筛选（标签 OR 逻辑，优先级 OR 逻辑，两者间 AND 逻辑）
+          // 应用筛选（标签 AND 逻辑，优先级 OR 逻辑，两者间 AND 逻辑）
           if (selectedTags.length > 0) {
             expanded = expanded.filter(memo => 
-              memo.tags.some(tag => selectedTags.includes(tag.id))
+              // AND 逻辑：备忘录必须包含所有选中的标签
+              selectedTags.every(tagId => memo.tags.some(tag => tag.id === tagId))
             );
           }
 
