@@ -1,5 +1,5 @@
 import { useMemoStore } from '@/stores/memoStore';
-import { format, addWeeks, addMonths, subWeeks, subMonths } from 'date-fns';
+import { format, addWeeks, addMonths, subWeeks, subMonths, addDays, subDays } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
 export function Header() {
@@ -14,7 +14,9 @@ export function Header() {
   } = useMemoStore();
 
   const handlePrev = () => {
-    if (viewMode === 'week') {
+    if (viewMode === 'day') {
+      setSelectedDate(subDays(selectedDate, 1));
+    } else if (viewMode === 'week') {
       setSelectedDate(subWeeks(selectedDate, 1));
     } else {
       setSelectedDate(subMonths(selectedDate, 1));
@@ -22,7 +24,9 @@ export function Header() {
   };
 
   const handleNext = () => {
-    if (viewMode === 'week') {
+    if (viewMode === 'day') {
+      setSelectedDate(addDays(selectedDate, 1));
+    } else if (viewMode === 'week') {
       setSelectedDate(addWeeks(selectedDate, 1));
     } else {
       setSelectedDate(addMonths(selectedDate, 1));
@@ -40,9 +44,15 @@ export function Header() {
     openDetailPanel();
   };
 
-  const dateDisplay = viewMode === 'week' 
-    ? `${format(selectedDate, 'yyyy')}年第${format(selectedDate, 'w')}周`
-    : format(selectedDate, 'yyyy年M月', { locale: zhCN });
+  const getDateDisplay = () => {
+    if (viewMode === 'day') {
+      return format(selectedDate, 'yyyy年M月d日', { locale: zhCN });
+    } else if (viewMode === 'week') {
+      return `${format(selectedDate, 'yyyy')}年第${format(selectedDate, 'w')}周`;
+    } else {
+      return format(selectedDate, 'yyyy年M月', { locale: zhCN });
+    }
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
@@ -80,12 +90,22 @@ export function Header() {
           </div>
 
           <h1 className="text-xl font-semibold text-gray-900 min-w-[150px]">
-            {dateDisplay}
+            {getDateDisplay()}
           </h1>
         </div>
 
         {/* 中间：视图切换 */}
         <div className="flex items-center bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => setViewMode('day')}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+              viewMode === 'day' 
+                ? 'bg-green-500 text-white shadow-sm' 
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Day
+          </button>
           <button
             onClick={() => setViewMode('week')}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${

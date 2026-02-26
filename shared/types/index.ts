@@ -95,7 +95,7 @@ export interface MemoWithInstance extends Memo {
 
 // ==================== 前端专用类型 ====================
 
-export type ViewMode = 'week' | 'month';
+export type ViewMode = 'day' | 'week' | 'month';
 
 export interface CalendarCell {
   date: string; // YYYY-MM-DD

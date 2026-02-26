@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useMemoStore } from '@/stores/memoStore';
 import { uploadApi } from '@/utils/api';
 import { format } from 'date-fns';
+import { getLunarDate } from '@/utils/calendar';
 import type { Memo, CreateMemoDTO } from '@calendar-memo/types';
 
 const repeatOptions = [
@@ -19,6 +20,34 @@ const priorityOptions = [
   { value: 'medium', label: '中', color: 'bg-yellow-500' },
   { value: 'low', label: '低', color: 'bg-blue-500' },
 ] as const;
+
+// 农历日期显示组件
+function LunarDateDisplay({ date }: { date?: string }) {
+  const lunarText = useMemo(() => {
+    if (!date) return null;
+    try {
+      const dateObj = new Date(date + 'T00:00:00');
+      const lunarDate = getLunarDate(dateObj);
+      if (lunarDate.jieQi) {
+        return `农历 ${lunarDate.month}月${lunarDate.day} · ${lunarDate.jieQi}`;
+      }
+      return `农历 ${lunarDate.month}月${lunarDate.day}`;
+    } catch {
+      return null;
+    }
+  }, [date]);
+
+  if (!lunarText) return null;
+
+  return (
+    <div className="mt-1.5 flex items-center gap-1 text-sm text-gray-500">
+      <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+      </svg>
+      <span>{lunarText}</span>
+    </div>
+  );
+}
 
 export function DetailPanel() {
   const { 
@@ -269,6 +298,8 @@ export function DetailPanel() {
             onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
           />
+          {/* 农历日期显示 */}
+          <LunarDateDisplay date={formData.date} />
         </div>
 
         {/* 优先级 */}

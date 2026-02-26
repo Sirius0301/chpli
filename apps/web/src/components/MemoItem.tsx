@@ -65,6 +65,7 @@ export function MemoItem({ memo, isHighlighted = false }: MemoItemProps) {
 
       {/* 内容 */}
       <div className="flex-1 min-w-0">
+        {/* 名称 */}
         <div className={cn(
           "truncate",
           memo.completed && "line-through text-gray-400"
@@ -72,9 +73,19 @@ export function MemoItem({ memo, isHighlighted = false }: MemoItemProps) {
           {memo.title}
         </div>
 
+        {/* 备注信息 */}
+        {memo.description && (
+          <div className={cn(
+            "text-xs text-gray-500 mt-0.5 line-clamp-2",
+            memo.completed && "text-gray-400"
+          )}>
+            {memo.description}
+          </div>
+        )}
+
         {/* 标签展示 */}
         {memo.tags.length > 0 && (
-          <div className="flex gap-1 mt-0.5 flex-wrap">
+          <div className="flex gap-1 mt-1 flex-wrap">
             {memo.tags.slice(0, 2).map(tag => (
               <span 
                 key={tag.id} 

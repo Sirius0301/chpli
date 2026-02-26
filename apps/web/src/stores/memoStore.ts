@@ -142,7 +142,11 @@ export const useMemoStore = create<MemoState>()(
 
           // 确定日期范围
           let rangeStart: Date, rangeEnd: Date;
-          if (viewMode === 'week') {
+          if (viewMode === 'day') {
+            // Day 视图：只显示当天
+            rangeStart = new Date(selectedDate);
+            rangeEnd = new Date(selectedDate);
+          } else if (viewMode === 'week') {
             const weekDays = getWeekDays(selectedDate);
             rangeStart = weekDays[0];
             rangeEnd = weekDays[6];
