@@ -1,12 +1,14 @@
 import { Router } from 'express';
-import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { existsSync, unlinkSync } from 'fs';
 import { join } from 'path';
-import { db, statements, rowToMemo } from '../db';
-import type { CreateMemoDTO, UpdateMemoDTO } from '@chpli/calendar-memo-shared';
+import { prisma } from '../lib/prisma';
+import { authMiddleware } from './auth';
 
 const router = Router();
+
+// 所有备忘录路由需要认证
+router.use(authMiddleware);
 
 // 验证 Schema
 const createMemoSchema = z.object({
@@ -15,7 +17,7 @@ const createMemoSchema = z.object({
   location: z.string().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
   completed: z.boolean().optional().default(false),
-  repeatType: z.enum(['none', 'weekly', 'biweekly', 'monthly', 'quarterly', 'semiannual', 'yearly']).optional().default('none'),
+  repeatType: z.enum(['none', 'daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'semiannual', 'yearly']).optional().default('none'),
   repeatEndType: z.enum(['never', 'onDate']).optional().default('never'),
   repeatEndDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
   priority: z.enum(['high', 'medium', 'low']).optional().nullable(),
@@ -23,28 +25,67 @@ const createMemoSchema = z.object({
   imageUrl: z.string().optional(),
 });
 
-// GET /api/memos
-router.get('/', (req, res) => {
+/**
+ * 验证标签是否全部属于当前用户
+ */
+async function validateTagIds(tagIds: string[] | undefined, userId: string): Promise<{ valid: boolean; message?: string }> {
+  if (!tagIds || tagIds.length === 0) {
+    return { valid: true };
+  }
+
+  // 查询这些标签是否都属于当前用户
+  const tags = await prisma.tag.findMany({
+    where: {
+      id: { in: tagIds },
+      userId,
+    },
+  });
+
+  if (tags.length !== tagIds.length) {
+    return { valid: false, message: '存在无效的标签或无权限使用' };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * GET /api/memos
+ * 获取当前用户的备忘录
+ */
+router.get('/', async (req: any, res) => {
   try {
+    const userId = req.userId;
     const { startDate, endDate, tags, priorities } = req.query;
 
-    let rows;
+    // 构建查询条件
+    const where: any = { userId };
+
     if (startDate && endDate) {
-      rows = statements.getMemosByDateRange.all({ 
-        start: startDate as string, 
-        end: endDate as string 
-      });
-    } else {
-      rows = statements.getAllMemos.all();
+      where.date = {
+        gte: startDate as string,
+        lte: endDate as string,
+      };
     }
 
-    let memos = rows.map(rowToMemo);
+    let memos = await prisma.memo.findMany({
+      where,
+      include: {
+        tags: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
+      },
+      orderBy: { date: 'desc' },
+    });
 
-    // 标签筛选 (OR 逻辑)
+    // 标签筛选 (AND 逻辑 - 备忘录必须包含所有选中的标签)
     if (tags && typeof tags === 'string' && tags.length > 0) {
       const tagIds = tags.split(',');
-      memos = memos.filter(memo => 
-        memo.tags.some(tag => tagIds.includes(tag.id))
+      memos = memos.filter(memo =>
+        tagIds.every(tagId => memo.tags.some(tag => tag.id === tagId))
       );
     }
 
@@ -61,52 +102,90 @@ router.get('/', (req, res) => {
   }
 });
 
-// GET /api/memos/:id
-router.get('/:id', (req, res) => {
+/**
+ * GET /api/memos/:id
+ * 获取单个备忘录
+ */
+router.get('/:id', async (req: any, res) => {
   try {
-    const row = statements.getMemoById.get({ id: req.params.id });
-    if (!row) {
+    const userId = req.userId;
+    const { id } = req.params;
+
+    const memo = await prisma.memo.findFirst({
+      where: { id, userId },
+      include: {
+        tags: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
+      },
+    });
+
+    if (!memo) {
       return res.status(404).json({ success: false, error: 'MEMO_NOT_FOUND', message: '备忘录不存在' });
     }
-    res.json({ success: true, data: rowToMemo(row) });
+
+    res.json({ success: true, data: memo });
   } catch (error) {
+    console.error('[GET /memos/:id]', error);
     res.status(500).json({ success: false, error: 'INTERNAL_ERROR' });
   }
 });
 
-// POST /api/memos
-router.post('/', (req, res) => {
+/**
+ * POST /api/memos
+ * 创建备忘录
+ */
+router.post('/', async (req: any, res) => {
   try {
+    const userId = req.userId;
     const parsed = createMemoSchema.parse(req.body);
-    const id = uuidv4();
 
-    const insert = db.transaction(() => {
-      statements.createMemo.run({
-        id,
-        title: parsed.title,
-        description: parsed.description || null,
-        location: parsed.location || null,
-        date: parsed.date,
-        completed: parsed.completed ? 1 : 0,
-        repeatType: parsed.repeatType,
-        repeatEndType: parsed.repeatEndType,
-        repeatEndDate: parsed.repeatEndDate || null,
-        priority: parsed.priority || null,
-        imageUrl: parsed.imageUrl || null,
-      });
-
-      // 关联标签
-      if (parsed.tagIds && parsed.tagIds.length > 0) {
-        for (const tagId of parsed.tagIds) {
-          statements.addMemoTag.run({ memoId: id, tagId });
-        }
+    // 验证标签权限
+    if (parsed.tagIds && parsed.tagIds.length > 0) {
+      const tagValidation = await validateTagIds(parsed.tagIds, userId);
+      if (!tagValidation.valid) {
+        return res.status(403).json({
+          success: false,
+          error: 'FORBIDDEN',
+          message: tagValidation.message,
+        });
       }
+    }
+
+    const memo = await prisma.memo.create({
+      data: {
+        title: parsed.title,
+        description: parsed.description,
+        location: parsed.location,
+        date: parsed.date,
+        completed: parsed.completed,
+        repeatType: parsed.repeatType.toUpperCase() as any,
+        repeatEndType: parsed.repeatEndType.toUpperCase() as any,
+        repeatEndDate: parsed.repeatEndDate,
+        priority: parsed.priority?.toUpperCase() as any,
+        imageUrl: parsed.imageUrl,
+        userId,
+        // 关联标签
+        tags: parsed.tagIds ? {
+          connect: parsed.tagIds.map(id => ({ id })),
+        } : undefined,
+      },
+      include: {
+        tags: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
+      },
     });
 
-    insert();
-
-    const newMemo = rowToMemo(statements.getMemoById.get({ id }));
-    res.status(201).json({ success: true, data: newMemo });
+    res.status(201).json({ success: true, data: memo });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, error: 'VALIDATION_ERROR', message: error.errors });
@@ -116,78 +195,117 @@ router.post('/', (req, res) => {
   }
 });
 
-// PUT /api/memos/:id
-router.put('/:id', (req, res) => {
+/**
+ * PUT /api/memos/:id
+ * 更新备忘录
+ */
+router.put('/:id', async (req: any, res) => {
   try {
+    const userId = req.userId;
     const { id } = req.params;
-    const existing = statements.getMemoById.get({ id });
+
+    // 检查备忘录是否存在且属于当前用户
+    const existing = await prisma.memo.findFirst({
+      where: { id, userId },
+    });
+
     if (!existing) {
-      return res.status(404).json({ success: false, error: 'MEMO_NOT_FOUND' });
+      return res.status(404).json({ success: false, error: 'MEMO_NOT_FOUND', message: '备忘录不存在' });
     }
 
     const parsed = createMemoSchema.partial().parse(req.body);
 
-    const update = db.transaction(() => {
-      statements.updateMemo.run({
-        id,
-        title: parsed.title ?? existing.title,
-        description: parsed.description !== undefined ? parsed.description : existing.description,
-        location: parsed.location !== undefined ? parsed.location : existing.location,
-        date: parsed.date ?? existing.date,
-        completed: parsed.completed !== undefined ? (parsed.completed ? 1 : 0) : existing.completed,
-        repeatType: parsed.repeatType ?? existing.repeat_type,
-        repeatEndType: parsed.repeatEndType ?? existing.repeat_end_type,
-        repeatEndDate: parsed.repeatEndDate !== undefined ? parsed.repeatEndDate : existing.repeat_end_date,
-        priority: parsed.priority !== undefined ? parsed.priority : existing.priority,
-        imageUrl: parsed.imageUrl !== undefined ? parsed.imageUrl : existing.image_url,
-      });
-
-      // 更新标签关联（先删后加）
-      if (parsed.tagIds) {
-        statements.removeMemoTags.run({ memoId: id });
-        for (const tagId of parsed.tagIds) {
-          statements.addMemoTag.run({ memoId: id, tagId });
-        }
+    // 验证标签权限
+    if (parsed.tagIds) {
+      const tagValidation = await validateTagIds(parsed.tagIds, userId);
+      if (!tagValidation.valid) {
+        return res.status(403).json({
+          success: false,
+          error: 'FORBIDDEN',
+          message: tagValidation.message,
+        });
       }
+    }
+
+    // 构建更新数据
+    const updateData: any = {};
+    if (parsed.title !== undefined) updateData.title = parsed.title;
+    if (parsed.description !== undefined) updateData.description = parsed.description;
+    if (parsed.location !== undefined) updateData.location = parsed.location;
+    if (parsed.date !== undefined) updateData.date = parsed.date;
+    if (parsed.completed !== undefined) updateData.completed = parsed.completed;
+    if (parsed.repeatType !== undefined) updateData.repeatType = parsed.repeatType.toUpperCase();
+    if (parsed.repeatEndType !== undefined) updateData.repeatEndType = parsed.repeatEndType.toUpperCase();
+    if (parsed.repeatEndDate !== undefined) updateData.repeatEndDate = parsed.repeatEndDate;
+    if (parsed.priority !== undefined) updateData.priority = parsed.priority?.toUpperCase();
+    if (parsed.imageUrl !== undefined) updateData.imageUrl = parsed.imageUrl;
+
+    // 处理标签关联
+    if (parsed.tagIds) {
+      updateData.tags = {
+        set: parsed.tagIds.map(id => ({ id })),
+      };
+    }
+
+    const updated = await prisma.memo.update({
+      where: { id },
+      data: updateData,
+      include: {
+        tags: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
+      },
     });
 
-    update();
-
-    const updated = rowToMemo(statements.getMemoById.get({ id }));
     res.json({ success: true, data: updated });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, error: 'VALIDATION_ERROR', message: error.errors });
     }
+    console.error('[PUT /memos/:id]', error);
     res.status(500).json({ success: false, error: 'INTERNAL_ERROR' });
   }
 });
 
-// DELETE /api/memos/:id
-router.delete('/:id', (req, res) => {
+/**
+ * DELETE /api/memos/:id
+ * 删除备忘录
+ */
+router.delete('/:id', async (req: any, res) => {
   try {
+    const userId = req.userId;
     const { id } = req.params;
-    const existing = statements.getMemoById.get({ id });
+
+    // 检查备忘录是否存在且属于当前用户
+    const existing = await prisma.memo.findFirst({
+      where: { id, userId },
+    });
+
     if (!existing) {
-      return res.status(404).json({ success: false, error: 'MEMO_NOT_FOUND' });
+      return res.status(404).json({ success: false, error: 'MEMO_NOT_FOUND', message: '备忘录不存在' });
     }
 
     // 删除关联的图片文件（如果存在）
-    const memo = rowToMemo(existing);
-    if (memo.imageUrl) {
-      const filename = memo.imageUrl.replace('/uploads/', '');
+    if (existing.imageUrl) {
+      const filename = existing.imageUrl.replace('/uploads/', '');
       const imagePath = join(process.cwd(), 'uploads', filename);
       if (existsSync(imagePath)) {
         try {
           unlinkSync(imagePath);
         } catch (err) {
           console.error('[Delete Memo] Failed to delete image:', err);
-          // 图片删除失败不影响备忘录删除
         }
       }
     }
 
-    statements.deleteMemo.run({ id });
+    await prisma.memo.delete({
+      where: { id },
+    });
+
     res.json({ success: true, message: '删除成功' });
   } catch (error) {
     console.error('[DELETE /memos/:id]', error);
@@ -195,14 +313,33 @@ router.delete('/:id', (req, res) => {
   }
 });
 
-// PATCH /api/memos/:id/toggle
-router.patch('/:id/toggle', (req, res) => {
+/**
+ * PATCH /api/memos/:id/toggle
+ * 切换完成状态
+ */
+router.patch('/:id/toggle', async (req: any, res) => {
   try {
+    const userId = req.userId;
     const { id } = req.params;
-    statements.toggleComplete.run({ id });
-    const updated = rowToMemo(statements.getMemoById.get({ id }));
-    res.json({ success: true, data: { completed: updated.completed } });
+
+    // 检查备忘录是否存在且属于当前用户
+    const existing = await prisma.memo.findFirst({
+      where: { id, userId },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ success: false, error: 'MEMO_NOT_FOUND', message: '备忘录不存在' });
+    }
+
+    const updated = await prisma.memo.update({
+      where: { id },
+      data: { completed: !existing.completed },
+      select: { completed: true },
+    });
+
+    res.json({ success: true, data: updated });
   } catch (error) {
+    console.error('[PATCH /memos/:id/toggle]', error);
     res.status(500).json({ success: false, error: 'INTERNAL_ERROR' });
   }
 });

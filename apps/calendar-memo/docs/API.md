@@ -279,6 +279,7 @@ GET /memos?startDate=2024-01-01&endDate=2024-01-31&tags[]=tag1&priorities[]=high
 
 ```http
 POST /memos
+Authorization: Bearer <token>
 ```
 
 **请求体**:
@@ -293,6 +294,18 @@ POST /memos
   "tagIds": ["tag-uuid-1", "tag-uuid-2"]
 }
 ```
+
+**字段说明**:
+- `title` (必填) - 标题
+- `description` (可选) - 备注
+- `location` (可选) - 地点
+- `date` (必填) - 日期 (YYYY-MM-DD)
+- `priority` (可选) - 优先级: `high`/`medium`/`low`
+- `repeatType` (可选) - 重复类型: `none`/`daily`/`weekly`/`biweekly`/`monthly`/`quarterly`/`semiannual`/`yearly`
+- `tagIds` (可选) - 标签 ID 数组，**必须全部属于当前用户**
+
+**错误码**:
+- `FORBIDDEN` (403) - 包含无效的标签 ID（不属于当前用户）
 
 ---
 
@@ -322,16 +335,41 @@ PATCH /memos/:id/toggle
 
 ## 🏷️ 标签模块
 
+> **注意**: 标签是用户私有的，每个用户只能看到/管理自己的标签
+
 ### 获取标签列表
+
+获取当前用户的所有标签，包含每个标签关联的备忘录数量。
 
 ```http
 GET /tags
+Authorization: Bearer <token>
 ```
+
+**响应**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "tag-uuid",
+      "name": "工作",
+      "color": "#3b82f6",
+      "count": 5
+    }
+  ]
+}
+```
+
+---
 
 ### 创建标签
 
+创建新标签，自动关联到当前用户。同一用户不能有同名标签。
+
 ```http
 POST /tags
+Authorization: Bearer <token>
 ```
 
 **请求体**:
@@ -342,11 +380,62 @@ POST /tags
 }
 ```
 
+**字段说明**:
+- `name` (必填) - 标签名，1-50字符
+- `color` (可选) - 颜色代码，如 `#3b82f6`
+
+**响应**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "tag-uuid",
+    "name": "工作",
+    "color": "#3b82f6",
+    "count": 0
+  }
+}
+```
+
+**错误码**:
+- `DUPLICATE_TAG` (409) - 标签名已存在
+
+---
+
+### 更新标签
+
+仅允许更新自己的标签。
+
+```http
+PUT /tags/:id
+Authorization: Bearer <token>
+```
+
+**请求体**:
+```json
+{
+  "name": "新名称",
+  "color": "#ff0000"
+}
+```
+
+**错误码**:
+- `TAG_NOT_FOUND` (404) - 标签不存在或无权限
+- `DUPLICATE_TAG` (409) - 标签名已存在
+
+---
+
 ### 删除标签
+
+删除标签会解除与所有备忘录的关联，但不会删除备忘录。
 
 ```http
 DELETE /tags/:id
+Authorization: Bearer <token>
 ```
+
+**错误码**:
+- `TAG_NOT_FOUND` (404) - 标签不存在或无权限
 
 ---
 

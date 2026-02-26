@@ -42,6 +42,7 @@ export function Sidebar() {
             <h3 className="text-sm font-semibold text-gray-700">标签筛选</h3>
             <span className="text-xs text-gray-400">{selectedTags.length > 0 ? `已选${selectedTags.length}` : ''}</span>
           </div>
+          <p className="text-xs text-gray-400 mb-2">标签仅自己可见</p>
           <div className="space-y-1">
             {tags.length === 0 ? (
               <p className="text-xs text-gray-400 italic">暂无标签</p>
