@@ -1,0 +1,15 @@
+{
+  "name": "@chpli/calendar-memo",
+  "version": "1.0.0",
+  "description": "Calendar Memo - Personal calendar memo system with OKR management",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter '@chpli/calendar-memo-*' --parallel dev",
+    "dev:web": "pnpm --filter @chpli/calendar-memo-web dev",
+    "dev:server": "pnpm --filter @chpli/calendar-memo-server dev",
+    "build": "pnpm --filter '@chpli/calendar-memo-*' build",
+    "start": "pnpm --filter @chpli/calendar-memo-server start",
+    "lint": "pnpm --filter '@chpli/calendar-memo-*' lint",
+    "type-check": "pnpm --filter '@chpli/calendar-memo-*' type-check"
+  }
+}

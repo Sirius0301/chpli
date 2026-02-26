@@ -1,52 +1,93 @@
-# 📅 Calendar Memo System
+# Chpli
 
-个人日历备忘录系统，支持周/月视图、重复规则、标签优先级管理，帮助构建人生 OKR 管理体系。
+Chpli 是一个个人生产力工具 Monorepo，包含日历备忘录等多个应用。
 
-## 技术栈
-- **前端**: React 18 + TypeScript + Vite + Tailwind CSS + date-fns + lunar-javascript
-- **后端**: Node.js + Express + TypeScript + better-sqlite3
-- **存储**: SQLite (本地文件) + 本地文件系统 (图片)
+## 🏗️ 项目结构
 
-## 快速开始
+```
+chpli/
+├── apps/                          # 所有应用
+│   └── calendar-memo/             # 日历备忘录应用
+│       ├── apps/
+│       │   ├── web/               # React 前端 (@chpli/calendar-memo-web)
+│       │   └── server/            # Express 后端 (@chpli/calendar-memo-server)
+│       └── shared/                # 共享类型 (@chpli/calendar-memo-shared)
+├── packages/                      # 共享包（未来扩展）
+├── infra/                         # 基础设施配置
+│   └── postgres/                  # PostgreSQL 配置
+├── docker-compose.yml             # Docker Compose 配置
+├── package.json                   # 根 package.json
+└── pnpm-workspace.yaml            # pnpm workspace 配置
+```
+
+## 🚀 快速开始
 
 ### 环境要求
-- Node.js ≥ 18
-- pnpm (推荐) 或 npm
+
+- Node.js >= 18.0.0
+- pnpm >= 9.0.0
+- Docker & Docker Compose (可选)
 
 ### 安装依赖
+
 ```bash
 pnpm install
 ```
 
-### 开发模式（同时启动前后端）
+### 开发模式
+
 ```bash
+# 启动所有应用
+cd apps/calendar-memo
 pnpm dev
-```
-- 前端: http://localhost:5173
-- 后端: http://localhost:3001
 
-### 生产构建
+# 或者从根目录
+pnpm dev:calendar
+```
+
+### 使用 Docker
+
 ```bash
-pnpm build
-pnpm start
+# 启动 PostgreSQL
+cp .env.example .env
+pnpm db:up
+
+# 启动所有服务
+docker-compose up -d
 ```
 
-## 文档索引
-- [TECH_DESIGN.md](./TECH_DESIGN.md) - 技术架构详细设计
-- [API.md](./API.md) - REST API 接口文档  
-- [DATABASE.md](./DATABASE.md) - 数据库 Schema 设计
-- [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md) - 项目目录结构说明
+## 📦 应用列表
 
-## 核心功能
-- [x] 周/月视图切换，支持农历和节气显示
-- [x] 备忘录 CRUD，支持图片上传
-- [x] 重复规则（Weekly/Biweekly/Monthly/3m/6m/Yearly）
-- [x] 标签与优先级筛选（并集 OR 逻辑）
-- [x] 完成状态跟踪
-- [ ] 数据导入导出 (Phase 2)
+| 应用 | 包名 | 端口 | 描述 |
+|------|------|------|------|
+| Calendar Memo Web | @chpli/calendar-memo-web | 5173 | 日历备忘录前端 |
+| Calendar Memo Server | @chpli/calendar-memo-server | 3001 | 日历备忘录后端 |
 
-## 数据存储
-- 数据库: `apps/server/database.sqlite`
-- 上传图片: `apps/server/uploads/`
+## 🛠️ 技术栈
 
-**注意**: 这两个目录已加入 .gitignore，请自行备份重要数据。
+- **前端**: React + TypeScript + Vite + TailwindCSS + Zustand
+- **后端**: Express + TypeScript + better-sqlite3
+- **数据库**: SQLite (当前) / PostgreSQL (迁移中)
+- **部署**: Docker + Docker Compose
+
+## 📝 开发指南
+
+### 添加新应用
+
+1. 在 `apps/` 目录下创建新应用目录
+2. 使用 `@chpli/<app-name>` 作为包名
+3. 在 `pnpm-workspace.yaml` 中添加路径
+4. 更新根目录 `package.json` 的 scripts
+
+### 共享包
+
+共享包放在 `packages/` 目录或应用内的 `shared/` 目录：
+
+```typescript
+// 引用共享类型
+import type { Memo } from '@chpli/calendar-memo-shared';
+```
+
+## 📄 许可证
+
+MIT

@@ -1,0 +1,23 @@
+{
+  "name": "@chpli/calendar-memo-shared",
+  "version": "1.0.0",
+  "description": "Shared types for Calendar Memo",
+  "main": "./types/index.ts",
+  "types": "./types/index.ts",
+  "exports": {
+    ".": {
+      "import": "./types/index.ts",
+      "require": "./types/index.ts"
+    },
+    "./types": {
+      "import": "./types/index.ts",
+      "require": "./types/index.ts"
+    }
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

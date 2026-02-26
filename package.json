@@ -1,16 +1,21 @@
 {
-  "name": "calendar-memo",
+  "name": "chpli",
   "version": "1.0.0",
-  "description": "Personal calendar memo system with OKR management",
+  "description": "Chpli Monorepo - A collection of personal productivity applications",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "pnpm run --parallel dev",
-    "dev:web": "pnpm --filter web dev",
-    "dev:server": "pnpm --filter server dev",
-    "build": "pnpm --filter web build && pnpm --filter server build",
-    "start": "pnpm --filter server start",
+    "dev:calendar": "pnpm --filter '@chpli/calendar-memo-*' --parallel dev",
+    "build": "pnpm -r build",
+    "start": "pnpm --filter @chpli/calendar-memo start",
     "lint": "pnpm -r lint",
-    "type-check": "pnpm -r type-check"
+    "type-check": "pnpm -r type-check",
+    "db:up": "docker-compose up -d postgres",
+    "db:down": "docker-compose down"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
@@ -18,5 +23,6 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "packageManager": "pnpm@9.0.0"
 }

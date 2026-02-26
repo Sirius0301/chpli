@@ -1,3 +1,6 @@
 packages:
   - 'apps/*'
-  - 'shared/*'
+  - 'apps/*/web'
+  - 'apps/*/server'
+  - 'apps/*/shared/*'
+  - 'packages/*'
