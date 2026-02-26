@@ -20,7 +20,7 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 
-// 静态文件服务（上传的图片）
+// 静态文件服务
 app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
 
 // 健康检查
@@ -51,4 +51,5 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 
 app.listen(PORT, () => {
   console.log(`[Server] Running on http://localhost:${PORT}`);
+  console.log(`[Database] PostgreSQL via Prisma`);
 });

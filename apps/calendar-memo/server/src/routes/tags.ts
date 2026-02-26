@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { prisma } from '../lib/prisma';
+import { prisma } from '../db/prisma';
 import { authMiddleware } from './auth';
 
 const router = Router();
@@ -32,7 +32,6 @@ router.get('/', async (req: any, res) => {
       orderBy: { createdAt: 'desc' },
     });
 
-    // 格式化响应
     const formattedTags = tags.map(tag => ({
       id: tag.id,
       name: tag.name,
@@ -56,7 +55,6 @@ router.post('/', async (req: any, res) => {
     const parsed = createTagSchema.parse(req.body);
     const userId = req.userId;
 
-    // 随机颜色（如果未提供）
     const color = parsed.color || generateRandomColor();
 
     try {
@@ -83,7 +81,6 @@ router.post('/', async (req: any, res) => {
         },
       });
     } catch (err: any) {
-      // 处理唯一性冲突
       if (err.code === 'P2002') {
         return res.status(409).json({
           success: false,
@@ -116,7 +113,6 @@ router.put('/:id', async (req: any, res) => {
     const userId = req.userId;
     const parsed = createTagSchema.partial().parse(req.body);
 
-    // 检查标签是否存在且属于当前用户
     const existing = await prisma.tag.findFirst({
       where: { id, userId },
     });
@@ -129,7 +125,6 @@ router.put('/:id', async (req: any, res) => {
       });
     }
 
-    // 构建更新数据
     const updateData: any = {};
     if (parsed.name !== undefined) updateData.name = parsed.name;
     if (parsed.color !== undefined) updateData.color = parsed.color;
@@ -163,7 +158,6 @@ router.put('/:id', async (req: any, res) => {
         },
       });
     } catch (err: any) {
-      // 处理唯一性冲突
       if (err.code === 'P2002') {
         return res.status(409).json({
           success: false,
@@ -187,15 +181,13 @@ router.put('/:id', async (req: any, res) => {
 
 /**
  * DELETE /api/tags/:id
- * 删除标签（仅允许删除自己的标签）
- * 删除标签会解除与备忘录的关联，但不删除备忘录
+ * 删除标签
  */
 router.delete('/:id', async (req: any, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
 
-    // 检查标签是否存在且属于当前用户
     const existing = await prisma.tag.findFirst({
       where: { id, userId },
     });
@@ -208,7 +200,6 @@ router.delete('/:id', async (req: any, res) => {
       });
     }
 
-    // 删除标签（Prisma 会自动解除与 Memo 的多对多关联）
     await prisma.tag.delete({
       where: { id },
     });

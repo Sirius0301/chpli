@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { existsSync, unlinkSync } from 'fs';
 import { join } from 'path';
-import { prisma } from '../lib/prisma';
+import { prisma } from '../db/prisma';
 import { authMiddleware } from './auth';
 
 const router = Router();
@@ -15,7 +15,7 @@ const createMemoSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().optional(),
   location: z.string().optional(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   completed: z.boolean().optional().default(false),
   repeatType: z.enum(['none', 'daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'semiannual', 'yearly']).optional().default('none'),
   repeatEndType: z.enum(['never', 'onDate']).optional().default('never'),
@@ -26,14 +26,13 @@ const createMemoSchema = z.object({
 });
 
 /**
- * 验证标签是否全部属于当前用户
+ * 验证标签归属
  */
 async function validateTagIds(tagIds: string[] | undefined, userId: string): Promise<{ valid: boolean; message?: string }> {
   if (!tagIds || tagIds.length === 0) {
     return { valid: true };
   }
 
-  // 查询这些标签是否都属于当前用户
   const tags = await prisma.tag.findMany({
     where: {
       id: { in: tagIds },
@@ -57,7 +56,6 @@ router.get('/', async (req: any, res) => {
     const userId = req.userId;
     const { startDate, endDate, tags, priorities } = req.query;
 
-    // 构建查询条件
     const where: any = { userId };
 
     if (startDate && endDate) {
@@ -71,17 +69,13 @@ router.get('/', async (req: any, res) => {
       where,
       include: {
         tags: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-          },
+          select: { id: true, name: true, color: true },
         },
       },
       orderBy: { date: 'desc' },
     });
 
-    // 标签筛选 (AND 逻辑 - 备忘录必须包含所有选中的标签)
+    // 标签筛选 (AND 逻辑)
     if (tags && typeof tags === 'string' && tags.length > 0) {
       const tagIds = tags.split(',');
       memos = memos.filter(memo =>
@@ -92,7 +86,7 @@ router.get('/', async (req: any, res) => {
     // 优先级筛选
     if (priorities && typeof priorities === 'string') {
       const priorityList = priorities.split(',') as ('high' | 'medium' | 'low')[];
-      memos = memos.filter(memo => memo.priority && priorityList.includes(memo.priority));
+      memos = memos.filter(memo => memo.priority && priorityList.includes(memo.priority.toLowerCase() as any));
     }
 
     res.json({ success: true, data: memos });
@@ -115,11 +109,7 @@ router.get('/:id', async (req: any, res) => {
       where: { id, userId },
       include: {
         tags: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-          },
+          select: { id: true, name: true, color: true },
         },
       },
     });
@@ -169,18 +159,13 @@ router.post('/', async (req: any, res) => {
         priority: parsed.priority?.toUpperCase() as any,
         imageUrl: parsed.imageUrl,
         userId,
-        // 关联标签
         tags: parsed.tagIds ? {
           connect: parsed.tagIds.map(id => ({ id })),
         } : undefined,
       },
       include: {
         tags: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-          },
+          select: { id: true, name: true, color: true },
         },
       },
     });
@@ -204,7 +189,6 @@ router.put('/:id', async (req: any, res) => {
     const userId = req.userId;
     const { id } = req.params;
 
-    // 检查备忘录是否存在且属于当前用户
     const existing = await prisma.memo.findFirst({
       where: { id, userId },
     });
@@ -227,7 +211,6 @@ router.put('/:id', async (req: any, res) => {
       }
     }
 
-    // 构建更新数据
     const updateData: any = {};
     if (parsed.title !== undefined) updateData.title = parsed.title;
     if (parsed.description !== undefined) updateData.description = parsed.description;
@@ -252,11 +235,7 @@ router.put('/:id', async (req: any, res) => {
       data: updateData,
       include: {
         tags: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-          },
+          select: { id: true, name: true, color: true },
         },
       },
     });
@@ -280,7 +259,6 @@ router.delete('/:id', async (req: any, res) => {
     const userId = req.userId;
     const { id } = req.params;
 
-    // 检查备忘录是否存在且属于当前用户
     const existing = await prisma.memo.findFirst({
       where: { id, userId },
     });
@@ -289,7 +267,7 @@ router.delete('/:id', async (req: any, res) => {
       return res.status(404).json({ success: false, error: 'MEMO_NOT_FOUND', message: '备忘录不存在' });
     }
 
-    // 删除关联的图片文件（如果存在）
+    // 删除关联的图片文件
     if (existing.imageUrl) {
       const filename = existing.imageUrl.replace('/uploads/', '');
       const imagePath = join(process.cwd(), 'uploads', filename);
@@ -322,7 +300,6 @@ router.patch('/:id/toggle', async (req: any, res) => {
     const userId = req.userId;
     const { id } = req.params;
 
-    // 检查备忘录是否存在且属于当前用户
     const existing = await prisma.memo.findFirst({
       where: { id, userId },
     });

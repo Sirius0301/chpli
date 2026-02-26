@@ -10,7 +10,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "db:migrate-tags": "tsx scripts/migrate-tags.ts"
+    "db:seed": "tsx scripts/db-seed.ts"
   },
   "dependencies": {
     "@chpli/calendar-memo-shared": "workspace:*",

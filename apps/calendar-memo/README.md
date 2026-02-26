@@ -8,29 +8,28 @@
 
 - Node.js >= 18.0.0
 - pnpm >= 9.0.0
-- PostgreSQL >= 14（或 Docker）
+- Docker & Docker Compose
 
-### 安装依赖
-
-```bash
-# 从根目录安装
-pnpm install
-
-# 或进入应用目录
-cd apps/calendar-memo
-pnpm install
-```
-
-### 环境配置
+### 1. 启动 PostgreSQL
 
 ```bash
-# 复制环境变量示例
-cp server/.env.example server/.env
+# 从项目根目录启动 PostgreSQL
+docker-compose up -d postgres
 
-# 编辑 .env 文件，配置数据库和 JWT 密钥
+# 或使用 pnpm 快捷命令
+pnpm db:up
 ```
 
-### 数据库初始化
+### 2. 配置环境变量
+
+```bash
+cd apps/calendar-memo/server
+cp .env.example .env
+
+# 编辑 .env（默认配置已适合本地开发）
+```
+
+### 3. 数据库初始化
 
 ```bash
 cd apps/calendar-memo/server
@@ -38,52 +37,23 @@ cd apps/calendar-memo/server
 # 生成 Prisma Client
 pnpm db:generate
 
-# 推送数据库结构（开发环境）
+# 推送数据库结构
 pnpm db:push
 
-# 或执行迁移（生产环境）
-pnpm db:migrate
-
-# 数据迁移（标签私有化）
-pnpm db:migrate-tags
+# 生成测试数据（用户: cici / 密码: ILoveYou）
+pnpm db:seed
 ```
 
-#### 标签私有化迁移
-
-如果是从旧版本升级，需要执行标签私有化迁移：
+### 4. 启动开发服务器
 
 ```bash
-# 该脚本会：
-# 1. 为无 userId 的标签根据关联备忘录推断归属
-# 2. 合并同用户的同名标签
-# 3. 删除无关联的空标签
-pnpm db:migrate-tags
-```
-
-### 开发模式
-
-```bash
-# 启动开发服务器（前端 + 后端）
+# 启动前后端（从 calendar-memo 目录）
+cd apps/calendar-memo
 pnpm dev
 
-# 单独启动前端
-pnpm dev:web
-
-# 单独启动后端
-pnpm dev:server
-```
-
-### 生产构建
-
-```bash
-# 构建前端
-pnpm --filter @chpli/calendar-memo-web build
-
-# 构建后端
-pnpm --filter @chpli/calendar-memo-server build
-
-# 启动生产服务器
-pnpm start
+# 或单独启动
+pnpm dev:web      # 前端: http://localhost:5173
+pnpm dev:server   # 后端: http://localhost:3001
 ```
 
 ## 📁 目录结构
@@ -91,97 +61,77 @@ pnpm start
 ```
 calendar-memo/
 ├── apps/
-│   ├── web/                # React 前端 (@chpli/calendar-memo-web)
-│   │   ├── src/
-│   │   │   ├── components/ # React 组件
-│   │   │   ├── stores/     # Zustand 状态管理
-│   │   │   └── utils/      # 工具函数
-│   │   ├── Dockerfile
-│   │   └── nginx.conf
-│   │
-│   └── server/             # Express 后端 (@chpli/calendar-memo-server)
+│   ├── web/                # React 前端
+│   └── server/             # Express + Prisma 后端
 │       ├── src/
 │       │   ├── routes/     # API 路由
-│       │   │   ├── auth.ts       # 认证模块
-│       │   │   ├── memoes.ts     # 备忘录 CRUD
-│       │   │   ├── tags.ts       # 标签管理
-│       │   │   └── upload.ts     # 文件上传
-│       │   ├── lib/
-│       │   │   └── prisma.ts     # Prisma Client
+│       │   ├── db/         # Prisma 客户端
 │       │   └── index.ts
 │       ├── prisma/
-│       │   └── schema.prisma     # 数据库模型
-│       └── Dockerfile
-│
-└── shared/                 # 共享类型 (@chpli/calendar-memo-shared)
-    └── types/
-        └── index.ts
+│       │   └── schema.prisma
+│       └── scripts/
+│           └── db-seed.ts  # 数据种子
+└── shared/                 # 共享类型
+```
+
+## 🗄️ 数据库
+
+### 技术栈
+
+- **数据库**: PostgreSQL 16
+- **ORM**: Prisma
+- **运行方式**: Docker Compose
+
+### 常用命令
+
+```bash
+# 启动 PostgreSQL
+docker-compose up -d postgres
+
+# 生成 Prisma Client
+pnpm db:generate
+
+# 推送结构变更（开发）
+pnpm db:push
+
+# 创建迁移（生产）
+pnpm db:migrate
+
+# 打开 Prisma Studio
+pnpm db:studio
+
+# 生成测试数据
+pnpm db:seed
+
+# 重置数据库
+pnpm db:reset
 ```
 
 ## 🛠️ 技术栈
 
 ### 前端
-- **框架**: React 18 + TypeScript
-- **构建**: Vite
-- **样式**: TailwindCSS
-- **状态**: Zustand
-- **日期**: date-fns + lunar-javascript
-- **HTTP**: Axios
+- React 18 + TypeScript
+- Vite + TailwindCSS
+- Zustand 状态管理
+- date-fns + lunar-javascript
 
 ### 后端
-- **框架**: Express + TypeScript
-- **数据库**: PostgreSQL + Prisma ORM
-- **认证**: JWT + bcrypt
-- **验证**: Zod
+- Express + TypeScript
+- Prisma ORM + PostgreSQL
+- JWT 认证 + bcrypt
+- Zod 参数校验
 
-### 特色功能
-- 🔐 用户认证（邮箱/手机 + 密码）
-- 📅 农历日期显示
-- 🔄 多种重复规则（天、周、双周、月、季度、半年、年）
-- 🏷️ 标签筛选（AND 逻辑）
-- ⚡ 优先级管理
-- 🖼️ 图片上传
+## 🔐 默认测试账号
 
-## 📚 开发文档
-
-- [API 文档](./docs/API.md) - 完整的接口文档
-- [数据库设计](./docs/DATABASE.md) - Prisma 模型说明
-- [环境变量](./docs/ENV.md) - 配置项说明
-
-## 🐳 Docker 部署
-
-```bash
-# 从项目根目录启动所有服务
-docker-compose up -d
-
-# 服务将运行在：
-# - Web: http://localhost:5173
-# - API: http://localhost:3001
-# - PostgreSQL: localhost:5432
+```
+Email: cici@example.com
+Password: ILoveYou
 ```
 
-## 🔒 认证说明
+运行 `pnpm db:seed` 后自动生成。
 
-本系统支持双因素登录：
-1. **登录凭证**: 邮箱或手机号 + 密码
-2. **敏感操作**: 需要验证码（注册、找回密码、修改密码）
+## 📝 文档
 
-密码策略：
-- 长度 ≥ 8 位
-- 必须包含中文或英文字符
-- 必须包含数字
-- 必须包含特殊字符（如 `!@#$`）
-- 使用 bcrypt 加密（cost=12）
-
-## 📝 更新日志
-
-### v1.1.0
-- 新增用户认证模块
-- 从 SQLite 迁移到 PostgreSQL
-- 添加 Prisma ORM
-
-### v1.0.0
-- 基础日历备忘录功能
-- 标签系统
-- 重复规则
-- 图片上传
+- [API 文档](./docs/API.md)
+- [数据库设计](./docs/DATABASE.md)
+- [环境变量](./docs/ENV.md)
