@@ -10,7 +10,7 @@ RUN npm install -g pnpm
 WORKDIR /app
 
 # Copy workspace files
-COPY pnpm-workspace.yaml package.json ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/calendar-memo/shared ./apps/calendar-memo/shared
 COPY apps/calendar-memo/web ./apps/calendar-memo/web
 

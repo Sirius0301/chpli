@@ -10,15 +10,16 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "lunar-javascript": "^1.6.1",
-    "date-fns": "^3.3.1",
-    "zustand": "^4.5.2",
+    "@chpli/calendar-memo-shared": "workspace:*",
     "axios": "^1.6.7",
     "clsx": "^2.1.0",
+    "date-fns": "^3.3.1",
+    "lunar-javascript": "^1.6.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.13.1",
     "tailwind-merge": "^2.2.1",
-    "@chpli/calendar-memo-shared": "workspace:*"
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@types/react": "^18.2.55",

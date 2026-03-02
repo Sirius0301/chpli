@@ -3,7 +3,7 @@ version: "3.8"
 services:
   # PostgreSQL 数据库
   postgres:
-    image: m.daocloud.io/docker.io/library/postgres:16-alpine
+    image: postgres:16-alpine
     container_name: chpli-postgres
     restart: unless-stopped
     environment:
@@ -24,40 +24,46 @@ services:
     networks:
       - chpli-network
 
-  # Calendar Memo - Web 前端
-  calendar-memo-web:
-    build:
-      context: .
-      dockerfile: apps/calendar-memo/web/Dockerfile
-    container_name: chpli-calendar-memo-web
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - VITE_API_URL=http://localhost:3001
-    ports:
-      - "${CALENDAR_MEMO_WEB_PORT:-5173}:80"
-    depends_on:
-      - calendar-memo-server
-    networks:
-      - chpli-network
-
-  # Calendar Memo - Backend Server
+  # Calendar Memo - Backend Server (开发模式)
   calendar-memo-server:
-    build:
-      context: .
-      dockerfile: apps/calendar-memo/server/Dockerfile
+    image: node:20-alpine
     container_name: chpli-calendar-memo-server
-    restart: unless-stopped
+    working_dir: /app/apps/calendar-memo/server
+    command: sh -c "apk add --no-cache openssl && npm install -g pnpm && pnpm install && npx prisma generate && pnpm dev"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - DATABASE_URL=postgresql://${POSTGRES_USER:-chpli}:${POSTGRES_PASSWORD:-chpli_secret}@postgres:5432/${POSTGRES_DB:-chpli}?schema=public
       - PORT=3001
       - JWT_SECRET=${JWT_SECRET:-your-secret-key}
     ports:
       - "${CALENDAR_MEMO_SERVER_PORT:-3001}:3001"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/calendar-memo/server/node_modules
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - chpli-network
+
+  # Calendar Memo - Web 前端 (开发模式)
+  calendar-memo-web:
+    image: node:20-alpine
+    container_name: chpli-calendar-memo-web
+    working_dir: /app/apps/calendar-memo/web
+    command: sh -c "npm install -g pnpm && pnpm install && npx vite --host"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:3001
+    ports:
+      - "${CALENDAR_MEMO_WEB_PORT:-5173}:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/calendar-memo/web/node_modules
+    depends_on:
+      - calendar-memo-server
     networks:
       - chpli-network
 

@@ -1,46 +1,21 @@
-import { useEffect } from 'react';
-import { useMemoStore } from '@/stores/memoStore';
-import { Layout } from '@/components/Layout';
-import { Sidebar } from '@/components/Sidebar';
-import { Header } from '@/components/Header';
-import { DayView } from '@/components/DayView';
-import { WeekView } from '@/components/WeekView';
-import { MonthView } from '@/components/MonthView';
-import { DetailPanel } from '@/components/DetailPanel';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { Login } from '@/pages/Login';
+import { Register } from '@/pages/Register';
+import { Home } from '@/pages/Home';
 
 function App() {
-  const { 
-    viewMode, 
-    fetchMemos, 
-    fetchTags, 
-    isDetailPanelOpen,
-  } = useMemoStore();
-
-  useEffect(() => {
-    fetchMemos();
-    fetchTags();
-  }, [fetchMemos, fetchTags]);
-
   return (
-    <Layout>
-      <div className="flex h-screen bg-gray-50">
-        {/* 左侧边栏 */}
-        <Sidebar />
-
-        {/* 主内容区 */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <Header />
-          <main className="flex-1 overflow-auto p-4">
-            {viewMode === 'day' ? <DayView /> : viewMode === 'week' ? <WeekView /> : <MonthView />}
-          </main>
-        </div>
-
-        {/* 右侧详情面板 */}
-        {isDetailPanelOpen && (
-          <DetailPanel />
-        )}
-      </div>
-    </Layout>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/" element={<Home />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

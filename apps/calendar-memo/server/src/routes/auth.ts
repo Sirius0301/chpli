@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import { CodeType } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { prisma } from '../lib/prisma';
+import { prisma } from '../db/prisma';
 
-const router = Router();
+const router: RouterType = Router();
 
 // JWT 配置
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';

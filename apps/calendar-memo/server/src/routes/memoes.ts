@@ -1,14 +1,33 @@
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import { z } from 'zod';
 import { existsSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { prisma } from '../db/prisma';
 import { authMiddleware } from './auth';
 
-const router = Router();
+const router: RouterType = Router();
 
 // 所有备忘录路由需要认证
 router.use(authMiddleware);
+
+/**
+ * 格式化备忘录数据，将优先级转为小写
+ */
+function formatMemo(memo: any) {
+  return {
+    ...memo,
+    priority: memo.priority?.toLowerCase() || null,
+    repeatType: memo.repeatType?.toLowerCase(),
+    repeatEndType: memo.repeatEndType?.toLowerCase(),
+  };
+}
+
+/**
+ * 格式化备忘录数组
+ */
+function formatMemos(memos: any[]) {
+  return memos.map(formatMemo);
+}
 
 // 验证 Schema
 const createMemoSchema = z.object({
@@ -89,7 +108,7 @@ router.get('/', async (req: any, res) => {
       memos = memos.filter(memo => memo.priority && priorityList.includes(memo.priority.toLowerCase() as any));
     }
 
-    res.json({ success: true, data: memos });
+    res.json({ success: true, data: formatMemos(memos) });
   } catch (error) {
     console.error('[GET /memos]', error);
     res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: '获取备忘录失败' });
@@ -118,7 +137,7 @@ router.get('/:id', async (req: any, res) => {
       return res.status(404).json({ success: false, error: 'MEMO_NOT_FOUND', message: '备忘录不存在' });
     }
 
-    res.json({ success: true, data: memo });
+    res.json({ success: true, data: formatMemo(memo) });
   } catch (error) {
     console.error('[GET /memos/:id]', error);
     res.status(500).json({ success: false, error: 'INTERNAL_ERROR' });
@@ -170,7 +189,7 @@ router.post('/', async (req: any, res) => {
       },
     });
 
-    res.status(201).json({ success: true, data: memo });
+    res.status(201).json({ success: true, data: formatMemo(memo) });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, error: 'VALIDATION_ERROR', message: error.errors });
@@ -240,7 +259,7 @@ router.put('/:id', async (req: any, res) => {
       },
     });
 
-    res.json({ success: true, data: updated });
+    res.json({ success: true, data: formatMemo(updated) });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, error: 'VALIDATION_ERROR', message: error.errors });
@@ -314,7 +333,7 @@ router.patch('/:id/toggle', async (req: any, res) => {
       select: { completed: true },
     });
 
-    res.json({ success: true, data: updated });
+    res.json({ success: true, data: formatMemo(updated) });
   } catch (error) {
     console.error('[PATCH /memos/:id/toggle]', error);
     res.status(500).json({ success: false, error: 'INTERNAL_ERROR' });

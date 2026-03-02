@@ -1,10 +1,10 @@
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { extname, join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 
-const router = Router();
+const router: RouterType = Router();
 
 // 确保上传目录存在
 const UPLOAD_DIR = join(process.cwd(), 'uploads');

@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db/prisma';
 import { authMiddleware } from './auth';
 
-const router = Router();
+const router: RouterType = Router();
 
 // 所有标签路由需要认证
 router.use(authMiddleware);

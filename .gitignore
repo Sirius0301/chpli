@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+.pnpm-store/
 .pnp
 .pnp.js
 package-lock.json
@@ -66,6 +67,17 @@ apps/server/database.sqlite-shm
 apps/server/database.sqlite-wal
 apps/server/uploads/*
 !apps/server/uploads/.gitkeep
+
+# Calendar Memo Server uploads
+apps/calendar-memo/server/uploads/*
+!apps/calendar-memo/server/uploads/.gitkeep
+
+# Docker volumes data
+volumes/
+data/
+
+# Prisma generated files (可选，通常保留)
+# apps/**/prisma/generated/
 
 # Misc
 .cache/
