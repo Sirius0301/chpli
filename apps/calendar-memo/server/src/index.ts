@@ -10,11 +10,15 @@ import authRouter from './routes/auth';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// 中间件
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
+// 中间件 - CORS 配置
+const corsOrigin = process.env.CORS_ORIGIN 
+  ? (process.env.CORS_ORIGIN === '*' ? true : process.env.CORS_ORIGIN.split(','))
+  : (process.env.NODE_ENV === 'production' 
     ? false 
-    : ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000']);
+
+app.use(cors({
+  origin: corsOrigin,
   credentials: true
 }));
 
