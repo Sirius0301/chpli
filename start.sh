@@ -193,7 +193,7 @@ start_backend() {
     if curl -s http://localhost:3001/ > /dev/null 2>&1; then
       echo -e "${GREEN}✓ 后端启动成功 (PID: $SERVER_PID)${NC}"
       echo -e "${BLUE}  日志: tail -f logs/server.log${NC}"
-      cd ../../../..
+      cd ../../..
       return 0
     fi
     sleep 1
@@ -201,7 +201,7 @@ start_backend() {
   
   echo -e "${RED}✗ 后端启动失败${NC}"
   echo "查看日志: tail -f logs/server.log"
-  cd ../../../..
+  cd ../../..
   exit 1
 }
 
