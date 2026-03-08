@@ -50,17 +50,13 @@ services:
         pnpm install &&
         echo '✅ 依赖安装完成' &&
         echo '' &&
-        echo '⏳ 安装 Prisma CLI...' &&
-        pnpm add -D prisma &&
-        echo '✅ Prisma CLI 安装完成' &&
-        echo '' &&
         echo '⏳ 生成 Prisma Client...' &&
-        npx prisma generate &&
+        ./node_modules/.bin/prisma generate &&
         echo '✅ Prisma Client 生成完成' &&
         echo '' &&
         echo '⏳ 运行数据迁移脚本...' &&
         echo '' &&
-        npx tsx scripts/migrate-memo-completions.ts &&
+        ./node_modules/.bin/tsx scripts/migrate-memo-completions.ts &&
         echo '' &&
         echo '✅ 所有操作已完成'
       "
