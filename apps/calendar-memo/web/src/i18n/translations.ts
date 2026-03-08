@@ -251,7 +251,7 @@ export const translations: Record<Language, TranslationKeys> = {
     
     // Date Format
     dateFormatDay: 'yyyy年M月d日',
-    dateFormatWeek: "yyyy'年第'w'周'",
+    dateFormatWeek: "yyyy'年第'{w}'周'",
     dateFormatMonth: 'yyyy年M月',
     lunarDate: '农历 {month}月{day}',
     lunarDateWithJieQi: '农历 {month}月{day} · {jieQi}',
