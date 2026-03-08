@@ -44,7 +44,8 @@ interface MemoState {
   createMemo: (data: any) => Promise<void>;
   updateMemo: (id: string, data: any) => Promise<void>;
   deleteMemo: (id: string) => Promise<void>;
-  toggleMemoComplete: (id: string) => Promise<void>;
+  // 修改：支持传递 instanceDate 参数
+  toggleMemoComplete: (id: string, instanceDate?: string) => Promise<void>;
   createTag: (data: { name: string; color?: string }) => Promise<void>;
 }
 
@@ -167,6 +168,27 @@ export const useMemoStore = create<MemoState>()(
           let expanded: MemoWithInstance[] = [];
           for (const memo of memos) {
             const instances = expandMemoToRange(memo, rangeStart, rangeEnd);
+            
+            // 为每个实例计算完成状态
+            for (const instance of instances) {
+              // 如果是重复备忘录的实例
+              if (memo.repeatType !== 'none') {
+                // 检查 completions 数组
+                const completionRecord = memo.completions?.find(
+                  c => c.instanceDate === instance.instanceDate
+                );
+                if (completionRecord) {
+                  // 如果存在完成记录，使用该记录的状态
+                  instance.completed = completionRecord.completed;
+                } else {
+                  // 如果不存在完成记录，默认为未完成
+                  // 这样每个实例都是独立的，不会互相影响
+                  instance.completed = false;
+                }
+              }
+              // 对于非重复备忘录，保持原有的 completed 状态
+            }
+            
             expanded.push(...instances);
           }
 
@@ -232,9 +254,10 @@ export const useMemoStore = create<MemoState>()(
           }
         },
 
-        toggleMemoComplete: async (id) => {
+        // 修改：支持传递 instanceDate 参数
+        toggleMemoComplete: async (id, instanceDate) => {
           try {
-            await memoApi.toggleComplete(id);
+            await memoApi.toggleComplete(id, instanceDate ? { instanceDate } : undefined);
             await get().fetchMemos();
           } catch (err) {
             console.error('Toggle failed:', err);

@@ -90,6 +90,10 @@ router.get('/', async (req: any, res) => {
         tags: {
           select: { id: true, name: true, color: true },
         },
+        // 包含完成状态记录
+        completions: {
+          select: { instanceDate: true, completed: true },
+        },
       },
       orderBy: { date: 'desc' },
     });
@@ -129,6 +133,9 @@ router.get('/:id', async (req: any, res) => {
       include: {
         tags: {
           select: { id: true, name: true, color: true },
+        },
+        completions: {
+          select: { instanceDate: true, completed: true },
         },
       },
     });
@@ -186,6 +193,7 @@ router.post('/', async (req: any, res) => {
         tags: {
           select: { id: true, name: true, color: true },
         },
+        completions: true,
       },
     });
 
@@ -256,6 +264,7 @@ router.put('/:id', async (req: any, res) => {
         tags: {
           select: { id: true, name: true, color: true },
         },
+        completions: true,
       },
     });
 
@@ -313,24 +322,79 @@ router.delete('/:id', async (req: any, res) => {
 /**
  * PATCH /api/memos/:id/toggle
  * 切换完成状态
+ * 
+ * 对于重复备忘录，需要传入 instanceDate 参数来标记特定日期的完成状态
+ * 如果没有 instanceDate，则切换基础完成状态
  */
 router.patch('/:id/toggle', async (req: any, res) => {
   try {
     const userId = req.userId;
     const { id } = req.params;
+    const { instanceDate } = req.body; // 实例日期 YYYY-MM-DD
 
     const existing = await prisma.memo.findFirst({
       where: { id, userId },
+      include: { completions: true },
     });
 
     if (!existing) {
       return res.status(404).json({ success: false, error: 'MEMO_NOT_FOUND', message: '备忘录不存在' });
     }
 
-    const updated = await prisma.memo.update({
+    // 如果是非重复备忘录，或者没有指定实例日期，切换基础完成状态
+    if (existing.repeatType === 'NONE' || !instanceDate) {
+      const updated = await prisma.memo.update({
+        where: { id },
+        data: { completed: !existing.completed },
+        include: {
+          tags: { select: { id: true, name: true, color: true } },
+          completions: true,
+        },
+      });
+      return res.json({ success: true, data: formatMemo(updated) });
+    }
+
+    // 对于重复备忘录，检查是否已存在该日期的完成记录
+    const existingCompletion = existing.completions.find(
+      c => c.instanceDate === instanceDate
+    );
+
+    let result;
+    if (existingCompletion) {
+      // 如果存在，切换完成状态
+      if (existingCompletion.completed) {
+        // 如果已完成，删除记录（恢复为未完成）
+        await prisma.memoCompletion.delete({
+          where: { id: existingCompletion.id },
+        });
+        result = { completed: false, instanceDate };
+      } else {
+        // 如果未完成，更新为已完成
+        await prisma.memoCompletion.update({
+          where: { id: existingCompletion.id },
+          data: { completed: true },
+        });
+        result = { completed: true, instanceDate };
+      }
+    } else {
+      // 如果不存在，创建完成记录
+      await prisma.memoCompletion.create({
+        data: {
+          memoId: id,
+          instanceDate,
+          completed: true,
+        },
+      });
+      result = { completed: true, instanceDate };
+    }
+
+    // 返回更新后的备忘录数据
+    const updated = await prisma.memo.findFirst({
       where: { id },
-      data: { completed: !existing.completed },
-      select: { completed: true },
+      include: {
+        tags: { select: { id: true, name: true, color: true } },
+        completions: true,
+      },
     });
 
     res.json({ success: true, data: formatMemo(updated) });

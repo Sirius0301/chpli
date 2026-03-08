@@ -22,7 +22,10 @@ export function MemoItem({ memo, isHighlighted = false }: MemoItemProps) {
 
   const handleToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    await toggleMemoComplete(memo.id);
+    // 对于重复备忘录的实例，传递 instanceDate 参数
+    // 这样只有该日期的实例会被标记为完成
+    const instanceDate = memo.instanceDate || memo.date;
+    await toggleMemoComplete(memo.id, instanceDate);
   };
 
   const handleClick = (e: React.MouseEvent) => {

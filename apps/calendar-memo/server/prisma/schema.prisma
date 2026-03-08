@@ -63,7 +63,7 @@ model Memo {
   description   String?
   location      String?
   date          String       // YYYY-MM-DD
-  completed     Boolean      @default(false)
+  completed     Boolean      @default(false)  // 基础完成状态（用于非重复备忘或作为默认值）
   repeatType    RepeatType   @default(NONE)
   repeatEndType RepeatEndType @default(NEVER)
   repeatEndDate String?
@@ -77,12 +77,31 @@ model Memo {
   // 关联标签 - 解除关联不删除
   tags          Tag[]
   
+  // 关联完成状态记录
+  completions   MemoCompletion[]
+  
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
   @@index([userId, date])
   @@index([userId, completed])
   @@map("memos")
+}
+
+// 备忘录完成状态表 - 用于记录重复备忘录在特定日期的完成状态
+model MemoCompletion {
+  id          String   @id @default(uuid())
+  memoId      String
+  memo        Memo     @relation(fields: [memoId], references: [id], onDelete: Cascade)
+  instanceDate String  // 实例日期 YYYY-MM-DD
+  completed   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 同一备忘录在同一日期的完成状态唯一
+  @@unique([memoId, instanceDate])
+  @@index([memoId, instanceDate])
+  @@map("memo_completions")
 }
 
 // 标签表 - 用户私有化

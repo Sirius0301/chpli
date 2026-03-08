@@ -21,6 +21,16 @@ export interface Tag {
   count?: number; // 后端统计的标签使用次数
 }
 
+// 备忘录完成状态记录
+export interface MemoCompletion {
+  id: string;
+  memoId: string;
+  instanceDate: string; // YYYY-MM-DD
+  completed: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Memo {
   id: string;
   title: string;
@@ -34,6 +44,7 @@ export interface Memo {
   priority?: Priority;
   imageUrl?: string;
   tags: Tag[]; // 关联标签，后端查询时组装
+  completions?: MemoCompletion[]; // 完成状态记录（用于重复备忘录）
   createdAt: string;
   updatedAt: string;
 }
@@ -57,6 +68,11 @@ export interface CreateMemoDTO {
 
 // 更新备忘录请求 (Partial)
 export type UpdateMemoDTO = Partial<CreateMemoDTO>;
+
+// 切换完成状态请求
+export interface ToggleCompleteDTO {
+  instanceDate?: string; // YYYY-MM-DD，用于重复备忘录
+}
 
 // 创建标签请求
 export interface CreateTagDTO {

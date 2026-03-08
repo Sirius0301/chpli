@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Memo, Tag, CreateMemoDTO, UpdateMemoDTO, ApiResponse } from '@chpli/calendar-memo-shared';
+import type { Memo, Tag, CreateMemoDTO, UpdateMemoDTO, ApiResponse, ToggleCompleteDTO } from '@chpli/calendar-memo-shared';
 
 const api = axios.create({
   baseURL: '/api',
@@ -49,8 +49,9 @@ export const memoApi = {
   delete: (id: string) => 
     api.delete<any, ApiResponse<void>>(`/memos/${id}`),
 
-  toggleComplete: (id: string) => 
-    api.patch<any, ApiResponse<{ completed: boolean }>>(`/memos/${id}/toggle`),
+  // 修改：支持传递 instanceDate 参数来标记重复备忘录的特定日期完成状态
+  toggleComplete: (id: string, data?: ToggleCompleteDTO) => 
+    api.patch<any, ApiResponse<{ completed: boolean }>>(`/memos/${id}/toggle`, data),
 };
 
 // Tags API
