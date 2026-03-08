@@ -36,4 +36,6 @@ COPY apps/calendar-memo/web/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
+# Note: 生产环境通过 5173 端口访问 (映射到容器 80 端口)
+
 CMD ["nginx", "-g", "daemon off;"]
