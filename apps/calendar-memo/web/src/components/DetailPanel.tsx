@@ -3,54 +3,11 @@ import { useMemoStore } from '@/stores/memoStore';
 import { uploadApi } from '@/utils/api';
 import { format } from 'date-fns';
 import { getLunarDate } from '@/utils/calendar';
+import { useI18n, formatTemplate } from '@/i18n';
 import type { Memo, CreateMemoDTO } from '@chpli/calendar-memo-shared';
 
-const repeatOptions = [
-  { value: 'none', label: '不重复' },
-  { value: 'daily', label: '每天' },
-  { value: 'weekly', label: '每周' },
-  { value: 'biweekly', label: '每两周' },
-  { value: 'monthly', label: '每月' },
-  { value: 'quarterly', label: '每3个月' },
-  { value: 'semiannual', label: '每6个月' },
-  { value: 'yearly', label: '每年' },
-] as const;
-
-const priorityOptions = [
-  { value: 'high', label: '高', color: 'bg-red-500' },
-  { value: 'medium', label: '中', color: 'bg-yellow-500' },
-  { value: 'low', label: '低', color: 'bg-blue-500' },
-] as const;
-
-// 农历日期显示组件
-function LunarDateDisplay({ date }: { date?: string }) {
-  const lunarText = useMemo(() => {
-    if (!date) return null;
-    try {
-      const dateObj = new Date(date + 'T00:00:00');
-      const lunarDate = getLunarDate(dateObj);
-      if (lunarDate.jieQi) {
-        return `农历 ${lunarDate.month}月${lunarDate.day} · ${lunarDate.jieQi}`;
-      }
-      return `农历 ${lunarDate.month}月${lunarDate.day}`;
-    } catch {
-      return null;
-    }
-  }, [date]);
-
-  if (!lunarText) return null;
-
-  return (
-    <div className="mt-1.5 flex items-center gap-1 text-sm text-gray-500">
-      <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-      </svg>
-      <span>{lunarText}</span>
-    </div>
-  );
-}
-
 export function DetailPanel() {
+  const { t } = useI18n();
   const { 
     selectedMemoId, 
     memos, 
@@ -66,7 +23,7 @@ export function DetailPanel() {
   const isEditing = !!selectedMemoId;
   const existingMemo = isEditing ? memos.find(m => m.id === selectedMemoId) : null;
 
-  // 表单状态
+  // Form state
   const [formData, setFormData] = useState<Partial<CreateMemoDTO>>({
     title: '',
     description: '',
@@ -85,7 +42,7 @@ export function DetailPanel() {
   const [newTagName, setNewTagName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 初始化表单数据
+  // Initialize form data
   useEffect(() => {
     if (existingMemo) {
       setFormData({
@@ -118,6 +75,24 @@ export function DetailPanel() {
     }
   }, [existingMemo, selectedDate]);
 
+  // Get repeat options from translations
+  const repeatOptions = [
+    { value: 'none', label: t.repeatNone },
+    { value: 'daily', label: t.repeatDaily },
+    { value: 'weekly', label: t.repeatWeekly },
+    { value: 'biweekly', label: t.repeatBiweekly },
+    { value: 'monthly', label: t.repeatMonthly },
+    { value: 'quarterly', label: t.repeatQuarterly },
+    { value: 'semiannual', label: t.repeatSemiannual },
+    { value: 'yearly', label: t.repeatYearly },
+  ] as const;
+
+  const priorityOptions = [
+    { value: 'high', label: t.priorityHighShort, color: 'bg-red-500' },
+    { value: 'medium', label: t.priorityMediumShort, color: 'bg-yellow-500' },
+    { value: 'low', label: t.priorityLowShort, color: 'bg-blue-500' },
+  ] as const;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title?.trim()) return;
@@ -144,7 +119,7 @@ export function DetailPanel() {
   };
 
   const handleDelete = async () => {
-    if (selectedMemoId && confirm('确定要删除这个备忘录吗？')) {
+    if (selectedMemoId && confirm(t.confirmDelete)) {
       await deleteMemo(selectedMemoId);
     }
   };
@@ -160,7 +135,7 @@ export function DetailPanel() {
         setFormData(prev => ({ ...prev, imageUrl: response.data!.url }));
       }
     } catch (err) {
-      alert('图片上传失败');
+      alert(t.uploadFailed);
     } finally {
       setIsUploading(false);
     }
@@ -182,10 +157,10 @@ export function DetailPanel() {
 
   return (
     <div className="w-96 bg-white border-l border-gray-200 flex flex-col h-full shadow-lg">
-      {/* 头部 */}
+      {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900">
-          {isEditing ? '编辑备忘录' : '新建备忘录'}
+          {isEditing ? t.editMemoTitle : t.newMemoTitle}
         </h2>
         <button 
           onClick={closeDetailPanel}
@@ -197,11 +172,11 @@ export function DetailPanel() {
         </button>
       </div>
 
-      {/* 表单内容 */}
+      {/* Form Content */}
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* 图片上传 */}
+        {/* Image Upload */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">图片</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t.image}</label>
           {formData.imageUrl ? (
             <div className="relative group">
               <img 
@@ -227,13 +202,13 @@ export function DetailPanel() {
               className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500 hover:border-green-500 hover:text-green-500 transition-colors"
             >
               {isUploading ? (
-                <span>上传中...</span>
+                <span>{t.uploading}</span>
               ) : (
                 <>
                   <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <span className="text-sm">点击添加图片</span>
+                  <span className="text-sm">{t.clickToAddImage}</span>
                 </>
               )}
             </button>
@@ -247,40 +222,40 @@ export function DetailPanel() {
           />
         </div>
 
-        {/* 名称 */}
+        {/* Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">名称 *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.nameRequired}</label>
           <input
             type="text"
             value={formData.title}
             onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-            placeholder="输入备忘录名称"
+            placeholder={t.namePlaceholder}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
             required
           />
         </div>
 
-        {/* 备注 */}
+        {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">备注</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.description}</label>
           <textarea
             value={formData.description}
             onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            placeholder="添加备注..."
+            placeholder={t.descriptionPlaceholder}
             rows={3}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
           />
         </div>
 
-        {/* 地点 */}
+        {/* Location */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">地点</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.location}</label>
           <div className="relative">
             <input
               type="text"
               value={formData.location}
               onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
-              placeholder="添加地点"
+              placeholder={t.locationPlaceholder}
               className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
             <svg className="w-5 h-5 text-gray-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -290,22 +265,20 @@ export function DetailPanel() {
           </div>
         </div>
 
-        {/* 日期 */}
+        {/* Date */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">日期</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.date}</label>
           <input
             type="date"
             value={formData.date}
             onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
           />
-          {/* 农历日期显示 */}
-          <LunarDateDisplay date={formData.date} />
         </div>
 
-        {/* 优先级 */}
+        {/* Priority */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">优先级</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t.priorityLabel}</label>
           <div className="flex gap-2">
             {priorityOptions.map(p => (
               <button
@@ -328,9 +301,9 @@ export function DetailPanel() {
           </div>
         </div>
 
-        {/* 重复规则 */}
+        {/* Repeat */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">重复</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.repeat}</label>
           <select
             value={formData.repeatType}
             onChange={e => setFormData(prev => ({ 
@@ -346,10 +319,10 @@ export function DetailPanel() {
           </select>
         </div>
 
-        {/* 结束重复（仅当选择重复时显示） */}
+        {/* End Repeat */}
         {formData.repeatType !== 'none' && (
           <div className="space-y-2 pl-4 border-l-2 border-gray-200">
-            <label className="block text-sm font-medium text-gray-700">结束重复</label>
+            <label className="block text-sm font-medium text-gray-700">{t.repeatEnd}</label>
             <div className="flex gap-4">
               <label className="flex items-center">
                 <input
@@ -358,7 +331,7 @@ export function DetailPanel() {
                   onChange={() => setFormData(prev => ({ ...prev, repeatEndType: 'never', repeatEndDate: undefined }))}
                   className="mr-2 text-green-500 focus:ring-green-500"
                 />
-                <span className="text-sm">永不</span>
+                <span className="text-sm">{t.repeatEndNever}</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -371,7 +344,7 @@ export function DetailPanel() {
                   }))}
                   className="mr-2 text-green-500 focus:ring-green-500"
                 />
-                <span className="text-sm">在指定日期</span>
+                <span className="text-sm">{t.repeatEndOnDate}</span>
               </label>
             </div>
             {formData.repeatEndType === 'onDate' && (
@@ -385,9 +358,9 @@ export function DetailPanel() {
           </div>
         )}
 
-        {/* 标签 */}
+        {/* Tags */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">标签</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t.tags}</label>
           <div className="flex flex-wrap gap-2 mb-3">
             {tags.map(tag => (
               <button
@@ -409,13 +382,13 @@ export function DetailPanel() {
             ))}
           </div>
 
-          {/* 新建标签 */}
+          {/* Create New Tag */}
           <div className="flex gap-2">
             <input
               type="text"
               value={newTagName}
               onChange={e => setNewTagName(e.target.value)}
-              placeholder="新建标签"
+              placeholder={t.newTagPlaceholder}
               className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), handleCreateTag())}
             />
@@ -425,13 +398,13 @@ export function DetailPanel() {
               disabled={!newTagName.trim()}
               className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              添加
+              {t.addTag}
             </button>
           </div>
         </div>
       </form>
 
-      {/* 底部按钮 */}
+      {/* Footer Buttons */}
       <div className="p-4 border-t border-gray-200 space-y-2">
         <div className="flex gap-2">
           <button
@@ -439,7 +412,7 @@ export function DetailPanel() {
             onClick={closeDetailPanel}
             className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            取消
+            {t.cancel}
           </button>
           <button
             type="button"
@@ -447,7 +420,7 @@ export function DetailPanel() {
             disabled={!formData.title?.trim()}
             className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            保存
+            {t.save}
           </button>
         </div>
         {isEditing && (
@@ -456,7 +429,7 @@ export function DetailPanel() {
             onClick={handleDelete}
             className="w-full px-4 py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
           >
-            删除备忘录
+            {t.deleteMemo}
           </button>
         )}
       </div>

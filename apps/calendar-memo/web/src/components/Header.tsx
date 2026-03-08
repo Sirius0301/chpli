@@ -1,10 +1,13 @@
 import { useMemoStore } from '@/stores/memoStore';
 import { useAuth } from '@/contexts/AuthContext';
+import { useI18n, formatTemplate } from '@/i18n';
 import { format, addWeeks, addMonths, subWeeks, subMonths, addDays, subDays } from 'date-fns';
-import { zhCN } from 'date-fns/locale';
+import { zhCN, enUS } from 'date-fns/locale';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 export function Header() {
   const { user, logout } = useAuth();
+  const { t, language } = useI18n();
   const { 
     viewMode, 
     setViewMode, 
@@ -14,6 +17,9 @@ export function Header() {
     openDetailPanel,
     selectMemo,
   } = useMemoStore();
+
+  // Select locale based on language
+  const locale = language === 'zh' ? zhCN : enUS;
 
   const handlePrev = () => {
     if (viewMode === 'day') {
@@ -46,42 +52,44 @@ export function Header() {
 
   const getDateDisplay = () => {
     if (viewMode === 'day') {
-      return format(selectedDate, 'yyyy年M月d日', { locale: zhCN });
+      return format(selectedDate, t.dateFormatDay, { locale });
     } else if (viewMode === 'week') {
-      return `${format(selectedDate, 'yyyy')}年第${format(selectedDate, 'w')}周`;
+      return formatTemplate(t.dateFormatWeek, { w: format(selectedDate, 'w', { locale }) });
     } else {
-      return format(selectedDate, 'yyyy年M月', { locale: zhCN });
+      return format(selectedDate, t.dateFormatMonth, { locale });
     }
   };
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
-        {/* 左侧：导航按钮 */}
+        {/* Left: Navigation */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            {/* 上一个 */}
+            {/* Previous */}
             <button 
               onClick={handlePrev}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Previous"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
 
-            {/* Today 按钮 */}
+            {/* Today button */}
             <button 
               onClick={handleToday}
               className="px-4 py-2 text-sm font-medium text-white bg-green-500 hover:bg-green-600 rounded-lg transition-colors shadow-sm"
             >
-              Today
+              {t.today}
             </button>
 
-            {/* 下一个 */}
+            {/* Next */}
             <button 
               onClick={handleNext}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Next"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -94,7 +102,7 @@ export function Header() {
           </h1>
         </div>
 
-        {/* 中间：视图切换 */}
+        {/* Center: View Switcher */}
         <div className="flex items-center bg-gray-100 rounded-lg p-1">
           <button
             onClick={() => setViewMode('day')}
@@ -104,7 +112,7 @@ export function Header() {
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Day
+            {t.dayView}
           </button>
           <button
             onClick={() => setViewMode('week')}
@@ -114,7 +122,7 @@ export function Header() {
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Week
+            {t.weekView}
           </button>
           <button
             onClick={() => setViewMode('month')}
@@ -124,13 +132,16 @@ export function Header() {
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Month
+            {t.monthView}
           </button>
         </div>
 
-        {/* 右侧：用户信息和操作 */}
+        {/* Right: User Info & Actions */}
         <div className="flex items-center gap-4">
-          {/* 新建备忘录按钮 */}
+          {/* Language Switcher */}
+          <LanguageSwitcher />
+
+          {/* New Memo Button */}
           <button 
             onClick={handleCreate}
             className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
@@ -138,10 +149,10 @@ export function Header() {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            新建备忘录
+            {t.newMemo}
           </button>
 
-          {/* 用户信息 */}
+          {/* User Info */}
           {user && (
             <div className="flex items-center gap-3">
               <div className="text-right">
@@ -151,7 +162,7 @@ export function Header() {
               <button
                 onClick={logout}
                 className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                title="退出登录"
+                title={t.logoutTitle}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

@@ -1,6 +1,8 @@
 import { useMemoStore } from '@/stores/memoStore';
+import { useI18n, formatTemplate } from '@/i18n';
 
 export function Sidebar() {
+  const { t } = useI18n();
   const { 
     tags, 
     selectedTags, 
@@ -11,16 +13,16 @@ export function Sidebar() {
   } = useMemoStore();
 
   const priorities = [
-    { key: 'high', label: '高优先级', color: 'bg-red-500' },
-    { key: 'medium', label: '中优先级', color: 'bg-yellow-500' },
-    { key: 'low', label: '低优先级', color: 'bg-blue-500' },
-  ] as const;
+    { key: 'high' as const, label: t.priorityHigh, color: 'bg-red-500' },
+    { key: 'medium' as const, label: t.priorityMedium, color: 'bg-yellow-500' },
+    { key: 'low' as const, label: t.priorityLow, color: 'bg-blue-500' },
+  ];
 
   const hasFilters = selectedTags.length > 0 || selectedPriorities.length > 0;
 
   return (
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
-      {/* Logo/标题 */}
+      {/* Logo/Title */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
@@ -29,23 +31,25 @@ export function Sidebar() {
             </svg>
           </div>
           <div>
-            <h1 className="font-bold text-gray-900">Calendar</h1>
-            <p className="text-xs text-gray-500">Memo System</p>
+            <h1 className="font-bold text-gray-900">{t.appName}</h1>
+            <p className="text-xs text-gray-500">{t.appSubtitle}</p>
           </div>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
-        {/* 标签筛选 */}
+        {/* Tag Filter */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700">标签筛选</h3>
-            <span className="text-xs text-gray-400">{selectedTags.length > 0 ? `已选${selectedTags.length}` : ''}</span>
+            <h3 className="text-sm font-semibold text-gray-700">{t.tagFilter}</h3>
+            <span className="text-xs text-gray-400">
+              {selectedTags.length > 0 ? formatTemplate(t.tagSelected, { count: selectedTags.length }) : ''}
+            </span>
           </div>
-          <p className="text-xs text-gray-400 mb-2">标签仅自己可见</p>
+          <p className="text-xs text-gray-400 mb-2">{t.tagOnlyVisibleToYou}</p>
           <div className="space-y-1">
             {tags.length === 0 ? (
-              <p className="text-xs text-gray-400 italic">暂无标签</p>
+              <p className="text-xs text-gray-400 italic">{t.noTags}</p>
             ) : (
               tags.map(tag => (
                 <button
@@ -71,9 +75,9 @@ export function Sidebar() {
           </div>
         </div>
 
-        {/* 优先级筛选 */}
+        {/* Priority Filter */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">优先级</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">{t.priority}</h3>
           <div className="space-y-1">
             {priorities.map(priority => (
               <button
@@ -92,21 +96,21 @@ export function Sidebar() {
           </div>
         </div>
 
-        {/* 清除筛选 */}
+        {/* Clear Filters */}
         {hasFilters && (
           <button
             onClick={clearFilters}
             className="w-full text-sm text-gray-500 hover:text-gray-700 py-2 border border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
           >
-            清除所有筛选
+            {t.clearAllFilters}
           </button>
         )}
       </div>
 
-      {/* 底部信息 */}
+      {/* Footer */}
       <div className="p-4 border-t border-gray-200 text-xs text-gray-400">
-        <p>快捷键提示</p>
-        <p className="mt-1">点击日期格子快速创建</p>
+        <p>{t.shortcuts}</p>
+        <p className="mt-1">{t.clickDateToCreate}</p>
       </div>
     </aside>
   );

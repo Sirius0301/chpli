@@ -51,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(response.data.data);
       }
     } catch (error) {
-      console.error('获取用户信息失败:', error);
+      console.error('Failed to fetch user info:', error);
       logout();
     } finally {
       setIsLoading(false);

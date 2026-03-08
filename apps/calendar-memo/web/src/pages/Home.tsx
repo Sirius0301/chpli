@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMemoStore } from '@/stores/memoStore';
+import { useI18n } from '@/i18n';
 import { Layout } from '@/components/Layout';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
@@ -12,6 +13,7 @@ import { DetailPanel } from '@/components/DetailPanel';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const { user, isLoading } = useAuth();
   const { 
     viewMode, 
@@ -36,7 +38,7 @@ export const Home: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-600">加载中...</div>
+        <div className="text-gray-600">{t.loading}</div>
       </div>
     );
   }
@@ -48,10 +50,10 @@ export const Home: React.FC = () => {
   return (
     <Layout>
       <div className="flex h-screen bg-gray-50">
-        {/* 左侧边栏 */}
+        {/* Sidebar */}
         <Sidebar />
 
-        {/* 主内容区 */}
+        {/* Main Content */}
         <div className="flex-1 flex flex-col min-w-0">
           <Header />
           <main className="flex-1 overflow-auto p-4">
@@ -59,7 +61,7 @@ export const Home: React.FC = () => {
           </main>
         </div>
 
-        {/* 右侧详情面板 */}
+        {/* Detail Panel */}
         {isDetailPanelOpen && (
           <DetailPanel />
         )}

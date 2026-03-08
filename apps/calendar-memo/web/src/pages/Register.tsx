@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useI18n } from '@/i18n';
 
 export const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register, sendCode } = useAuth();
+  const { t } = useI18n();
   const [formData, setFormData] = useState({
     email: '',
     code: '',
@@ -23,7 +25,7 @@ export const Register: React.FC = () => {
 
   const handleSendCode = async () => {
     if (!formData.email) {
-      setError('请先输入邮箱');
+      setError(t.registerEnterEmailFirst);
       return;
     }
 
@@ -41,7 +43,7 @@ export const Register: React.FC = () => {
         });
       }, 1000);
     } catch (err: any) {
-      setError(err.response?.data?.message || '发送验证码失败');
+      setError(err.response?.data?.message || t.registerFailed);
     } finally {
       setIsSendingCode(false);
     }
@@ -52,12 +54,12 @@ export const Register: React.FC = () => {
     setError('');
 
     if (formData.password !== formData.confirmPassword) {
-      setError('两次输入的密码不一致');
+      setError(t.registerPasswordMismatch);
       return;
     }
 
     if (formData.password.length < 8) {
-      setError('密码长度至少8位');
+      setError(t.registerPasswordTooShort);
       return;
     }
 
@@ -71,7 +73,7 @@ export const Register: React.FC = () => {
       });
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.message || '注册失败');
+      setError(err.response?.data?.message || t.registerFailed);
     } finally {
       setIsLoading(false);
     }
@@ -82,12 +84,12 @@ export const Register: React.FC = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            注册新账号
+            {t.registerTitle}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            已有账号？{' '}
+            {t.registerHasAccount}{' '}
             <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-              立即登录
+              {t.registerLoginNow}
             </Link>
           </p>
         </div>
@@ -101,14 +103,14 @@ export const Register: React.FC = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="name" className="sr-only">姓名</label>
+              <label htmlFor="name" className="sr-only">{t.registerNamePlaceholder}</label>
               <input
                 id="name"
                 name="name"
                 type="text"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="姓名"
+                placeholder={t.registerNamePlaceholder}
                 value={formData.name}
                 onChange={handleChange}
               />
@@ -120,7 +122,7 @@ export const Register: React.FC = () => {
                 type="email"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="邮箱地址"
+                placeholder={t.registerEmailPlaceholder}
                 value={formData.email}
                 onChange={handleChange}
               />
@@ -130,11 +132,11 @@ export const Register: React.FC = () => {
                 disabled={isSendingCode || countdown > 0}
                 className="px-4 py-2 border border-transparent text-sm font-medium rounded-none text-blue-600 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 whitespace-nowrap"
               >
-                {countdown > 0 ? `${countdown}s` : '获取验证码'}
+                {countdown > 0 ? `${countdown}s` : (isSendingCode ? t.registerSending : t.registerSendCode)}
               </button>
             </div>
             <div>
-              <label htmlFor="code" className="sr-only">验证码</label>
+              <label htmlFor="code" className="sr-only">{t.registerCodePlaceholder}</label>
               <input
                 id="code"
                 name="code"
@@ -142,33 +144,33 @@ export const Register: React.FC = () => {
                 required
                 maxLength={6}
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="验证码"
+                placeholder={t.registerCodePlaceholder}
                 value={formData.code}
                 onChange={handleChange}
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">密码</label>
+              <label htmlFor="password" className="sr-only">{t.registerPasswordPlaceholder}</label>
               <input
                 id="password"
                 name="password"
                 type="password"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="密码（至少8位）"
+                placeholder={t.registerPasswordPlaceholder}
                 value={formData.password}
                 onChange={handleChange}
               />
             </div>
             <div>
-              <label htmlFor="confirmPassword" className="sr-only">确认密码</label>
+              <label htmlFor="confirmPassword" className="sr-only">{t.registerConfirmPasswordPlaceholder}</label>
               <input
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="确认密码"
+                placeholder={t.registerConfirmPasswordPlaceholder}
                 value={formData.confirmPassword}
                 onChange={handleChange}
               />
@@ -181,7 +183,7 @@ export const Register: React.FC = () => {
               disabled={isLoading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {isLoading ? '注册中...' : '注册'}
+              {isLoading ? t.registerLoading : t.registerButton}
             </button>
           </div>
         </form>

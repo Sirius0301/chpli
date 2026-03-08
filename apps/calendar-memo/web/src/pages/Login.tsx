@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useI18n, formatTemplate } from '@/i18n';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -19,7 +21,7 @@ export const Login: React.FC = () => {
       await login(email, password);
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.message || '登录失败');
+      setError(err.response?.data?.message || t.loginFailed);
     } finally {
       setIsLoading(false);
     }
@@ -30,12 +32,12 @@ export const Login: React.FC = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            登录到日历备忘录
+            {t.loginTitle}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            还没有账号？{' '}
+            {t.loginNoAccount}{' '}
             <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              立即注册
+              {t.loginRegisterNow}
             </Link>
           </p>
         </div>
@@ -49,27 +51,27 @@ export const Login: React.FC = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="email" className="sr-only">邮箱</label>
+              <label htmlFor="email" className="sr-only">{t.loginEmailPlaceholder}</label>
               <input
                 id="email"
                 name="email"
                 type="email"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="邮箱地址"
+                placeholder={t.loginEmailPlaceholder}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">密码</label>
+              <label htmlFor="password" className="sr-only">{t.loginPasswordPlaceholder}</label>
               <input
                 id="password"
                 name="password"
                 type="password"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="密码"
+                placeholder={t.loginPasswordPlaceholder}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -82,7 +84,7 @@ export const Login: React.FC = () => {
               disabled={isLoading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {isLoading ? '登录中...' : '登录'}
+              {isLoading ? t.loginLoading : t.loginButton}
             </button>
           </div>
         </form>
