@@ -24,6 +24,58 @@ services:
     networks:
       - chpli-network
 
+  # 数据库迁移服务 - 为已完成的备忘录生成 completion 记录
+  # 使用方法: docker-compose -f docker-compose.dev.yml --profile migrate up db-migrate
+  db-migrate:
+    image: node:20-alpine
+    container_name: chpli-db-migrate
+    working_dir: /app/apps/calendar-memo/server
+    command: >
+      sh -c "
+        set -e &&
+        echo '========================================' &&
+        echo '  Calendar Memo 数据迁移工具 (Dev)' &&
+        echo '========================================' &&
+        echo '' &&
+        echo '⏳ 等待数据库就绪...' &&
+        apk add --no-cache postgresql-client > /dev/null 2>&1 &&
+        until pg_isready -h postgres -U ${POSTGRES_USER:-chpli} > /dev/null 2>&1; do
+          echo '  等待 PostgreSQL...'
+          sleep 2
+        done &&
+        echo '✅ 数据库已就绪' &&
+        echo '' &&
+        echo '⏳ 安装依赖...' &&
+        npm install -g pnpm > /dev/null 2>&1 &&
+        pnpm install > /dev/null 2>&1 &&
+        echo '✅ 依赖安装完成' &&
+        echo '' &&
+        echo '⏳ 生成 Prisma Client...' &&
+        npx prisma generate > /dev/null 2>&1 &&
+        echo '✅ Prisma Client 生成完成' &&
+        echo '' &&
+        echo '⏳ 运行数据迁移脚本...' &&
+        echo '' &&
+        npx tsx scripts/migrate-memo-completions.ts &&
+        echo '' &&
+        echo '✅ 所有操作已完成'
+      "
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-chpli}:${POSTGRES_PASSWORD:-chpli_secret}@postgres:5432/${POSTGRES_DB:-chpli}?schema=public
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/calendar-memo/server/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - chpli-network
+    profiles:
+      - migrate  # 只在指定时运行: docker-compose --profile migrate up db-migrate
+    restart: "no"  # 只运行一次，不重启
+
   # Calendar Memo - Backend Server (开发模式)
   calendar-memo-server:
     image: node:20-alpine

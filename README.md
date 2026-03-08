@@ -52,7 +52,13 @@ pnpm dev
 cp .env.example .env
 # 编辑 .env 配置你的数据库密码和JWT密钥
 
-# 启动所有服务
+# 1. 启动数据库
+docker-compose up -d postgres
+
+# 2. （可选）运行数据迁移 - 为已完成的备忘录生成 completion 记录
+docker-compose --profile migrate up db-migrate
+
+# 3. 启动所有服务
 docker-compose up -d
 
 # 查看日志
@@ -60,6 +66,22 @@ docker-compose logs -f
 ```
 
 访问 http://localhost
+
+#### 数据迁移说明
+
+如果从旧版本升级，需要运行数据迁移脚本将已完成备忘录的完成状态迁移到新系统。迁移脚本会：
+
+- **非重复备忘录**：创建一个 completion 记录
+- **重复备忘录**：创建从开始日期到 updatedAt 之间的所有实例的 completion 记录
+
+```bash
+# 使用 Docker Compose 运行迁移（推荐）
+docker-compose --profile migrate up db-migrate
+
+# 或在本地运行
+cd apps/calendar-memo/server
+pnpm migrate:completions
+```
 
 ---
 
