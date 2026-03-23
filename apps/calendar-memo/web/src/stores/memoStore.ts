@@ -53,6 +53,8 @@ interface MemoState {
   // 修改：支持传递 instanceDate 参数
   toggleMemoComplete: (id: string, instanceDate?: string) => Promise<void>;
   createTag: (data: { name: string; color?: string }) => Promise<void>;
+  updateTag: (id: string, data: { name?: string; color?: string }) => Promise<void>;
+  deleteTag: (id: string) => Promise<void>;
 }
 
 export const useMemoStore = create<MemoState>()(
@@ -131,14 +133,26 @@ export const useMemoStore = create<MemoState>()(
         fetchMemos: async () => {
           set({ isLoading: true, error: null });
           try {
+            const token = localStorage.getItem('token');
+            console.log('[fetchMemos] Token exists:', !!token);
+            
             const response = await memoApi.getAll();
+            console.log('[fetchMemos] API response:', response);
             if (response.success) {
-              set({ memos: response.data || [] });
+              const memos = response.data || [];
+              console.log('[fetchMemos] Memos count:', memos.length);
+              if (memos.length > 0) {
+                console.log('[fetchMemos] First memo sample:', memos[0]);
+                console.log('[fetchMemos] Memo date field:', memos[0].date);
+              }
+              set({ memos });
               get().expandMemosForRange();
             } else {
+              console.error('[fetchMemos] API returned error:', response.message);
               set({ error: response.message || '获取失败' });
             }
           } catch (err: any) {
+            console.error('[fetchMemos] Error:', err);
             set({ error: err.message || '网络错误' });
           } finally {
             set({ isLoading: false });
@@ -159,6 +173,7 @@ export const useMemoStore = create<MemoState>()(
         // 核心算法：展开重复规则
         expandMemosForRange: () => {
           const { memos, selectedDate, viewMode, selectedTags, selectedPriorities } = get();
+          console.log('[expandMemosForRange] Input memos:', memos.length, 'selectedDate:', selectedDate, 'viewMode:', viewMode);
 
           // 确定日期范围
           let rangeStart: Date, rangeEnd: Date;
@@ -221,6 +236,7 @@ export const useMemoStore = create<MemoState>()(
           // 按日期排序
           expanded.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+          console.log('[expandMemosForRange] Output expanded:', expanded.length);
           set({ expandedMemos: expanded });
         },
 
@@ -282,6 +298,28 @@ export const useMemoStore = create<MemoState>()(
             await get().fetchTags();
           } catch (err) {
             console.error('Create tag failed:', err);
+          }
+        },
+
+        updateTag: async (id, data) => {
+          try {
+            await tagApi.update(id, data);
+            await get().fetchTags();
+            // 更新标签后刷新备忘录列表（因为备忘录中嵌入了标签信息）
+            await get().fetchMemos();
+          } catch (err) {
+            console.error('Update tag failed:', err);
+          }
+        },
+
+        deleteTag: async (id) => {
+          try {
+            await tagApi.delete(id);
+            await get().fetchTags();
+            // 删除标签后刷新备忘录列表
+            await get().fetchMemos();
+          } catch (err) {
+            console.error('Delete tag failed:', err);
           }
         },
       }),

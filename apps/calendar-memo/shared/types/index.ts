@@ -5,7 +5,7 @@
 
 // ==================== 基础枚举 ====================
 
-export type RepeatType = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'yearly';
+export type RepeatType = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'yearly' | 'custom';
 
 export type RepeatEndType = 'never' | 'onDate';
 
@@ -41,6 +41,7 @@ export interface Memo {
   repeatType: RepeatType;
   repeatEndType: RepeatEndType;
   repeatEndDate?: string; // YYYY-MM-DD
+  customDays?: number[]; // 自定义重复的天数 [0=周日, 1=周一, ..., 6=周六]
   priority?: Priority;
   imageUrl?: string;
   tags: Tag[]; // 关联标签，后端查询时组装
@@ -61,6 +62,7 @@ export interface CreateMemoDTO {
   repeatType?: RepeatType;
   repeatEndType?: RepeatEndType;
   repeatEndDate?: string;
+  customDays?: number[]; // 自定义重复的天数 [0=周日, 1=周一, ..., 6=周六]
   priority?: Priority;
   tagIds?: string[];
   imageUrl?: string;

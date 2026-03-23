@@ -72,6 +72,7 @@ export interface TranslationKeys {
   clickDateToCreate: string;
   collapseSidebar: string;
   expandSidebar: string;
+  newTag: string;
 
   // Detail Panel
   newMemoTitle: string;
@@ -102,6 +103,10 @@ export interface TranslationKeys {
   repeatQuarterly: string;
   repeatSemiannual: string;
   repeatYearly: string;
+  repeatCustom: string;
+  customRepeatTitle: string;
+  customRepeatDesc: string;
+  weekDaysFull: string[];
   repeatEnd: string;
   repeatEndNever: string;
   repeatEndOnDate: string;
@@ -203,6 +208,7 @@ export const translations: Record<Language, TranslationKeys> = {
     clickDateToCreate: "点击日期格子快速创建",
     collapseSidebar: "收起",
     expandSidebar: "展开",
+    newTag: "新建标签",
 
     // Detail Panel
     newMemoTitle: "新建备忘录",
@@ -233,6 +239,10 @@ export const translations: Record<Language, TranslationKeys> = {
     repeatQuarterly: "每3个月",
     repeatSemiannual: "每6个月",
     repeatYearly: "每年",
+    repeatCustom: "自定义",
+    customRepeatTitle: "自定义重复",
+    customRepeatDesc: "选择每周重复的日期",
+    weekDaysFull: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"],
     repeatEnd: "结束重复",
     repeatEndNever: "永不",
     repeatEndOnDate: "在指定日期",
@@ -333,6 +343,7 @@ export const translations: Record<Language, TranslationKeys> = {
     clickDateToCreate: "Click date cell to create",
     collapseSidebar: "Collapse",
     expandSidebar: "Expand",
+    newTag: "New Tag",
 
     // Detail Panel
     newMemoTitle: "New Memo",
@@ -363,6 +374,10 @@ export const translations: Record<Language, TranslationKeys> = {
     repeatQuarterly: "Every 3 months",
     repeatSemiannual: "Every 6 months",
     repeatYearly: "Yearly",
+    repeatCustom: "Custom",
+    customRepeatTitle: "Custom Repeat",
+    customRepeatDesc: "Select days to repeat",
+    weekDaysFull: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     repeatEnd: "End repeat",
     repeatEndNever: "Never",
     repeatEndOnDate: "On date",

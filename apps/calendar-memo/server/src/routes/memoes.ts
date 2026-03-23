@@ -11,14 +11,15 @@ const router: RouterType = Router();
 router.use(authMiddleware);
 
 /**
- * 格式化备忘录数据，将优先级转为小写
+ * 格式化备忘录数据，将枚举值转为前端格式
  */
 function formatMemo(memo: any) {
   return {
     ...memo,
     priority: memo.priority?.toLowerCase() || null,
     repeatType: memo.repeatType?.toLowerCase(),
-    repeatEndType: memo.repeatEndType?.toLowerCase(),
+    // repeatEndType: never | onDate (保持驼峰格式)
+    repeatEndType: memo.repeatEndType === 'ONDATE' ? 'onDate' : 'never',
   };
 }
 
@@ -36,9 +37,10 @@ const createMemoSchema = z.object({
   location: z.string().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   completed: z.boolean().optional().default(false),
-  repeatType: z.enum(['none', 'daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'semiannual', 'yearly']).optional().default('none'),
+  repeatType: z.enum(['none', 'daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'semiannual', 'yearly', 'custom']).optional().default('none'),
   repeatEndType: z.enum(['never', 'onDate']).optional().default('never'),
   repeatEndDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  customDays: z.array(z.number().min(0).max(6)).optional(),
   priority: z.enum(['high', 'medium', 'low']).optional().nullable(),
   tagIds: z.array(z.string()).optional(),
   imageUrl: z.string().optional(),
@@ -182,6 +184,7 @@ router.post('/', async (req: any, res) => {
         repeatType: parsed.repeatType.toUpperCase() as any,
         repeatEndType: parsed.repeatEndType.toUpperCase() as any,
         repeatEndDate: parsed.repeatEndDate,
+        customDays: parsed.customDays || [],
         priority: parsed.priority?.toUpperCase() as any,
         imageUrl: parsed.imageUrl,
         userId,
@@ -247,6 +250,7 @@ router.put('/:id', async (req: any, res) => {
     if (parsed.repeatType !== undefined) updateData.repeatType = parsed.repeatType.toUpperCase();
     if (parsed.repeatEndType !== undefined) updateData.repeatEndType = parsed.repeatEndType.toUpperCase();
     if (parsed.repeatEndDate !== undefined) updateData.repeatEndDate = parsed.repeatEndDate;
+    if (parsed.customDays !== undefined) updateData.customDays = parsed.customDays;
     if (parsed.priority !== undefined) updateData.priority = parsed.priority?.toUpperCase();
     if (parsed.imageUrl !== undefined) updateData.imageUrl = parsed.imageUrl;
 

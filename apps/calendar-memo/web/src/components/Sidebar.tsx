@@ -1,5 +1,7 @@
 import { useMemoStore } from '@/stores/memoStore';
 import { useI18n, formatTemplate } from '@/i18n';
+import { UpcomingMemos } from './UpcomingMemos';
+import { TagManager, CreateTagButton } from './TagManager';
 
 interface SidebarProps {
   isCollapsed?: boolean;
@@ -91,16 +93,15 @@ export function Sidebar({ isCollapsed = false, onToggleCollapse }: SidebarProps)
             {tags.length === 0 ? (
               !collapsed && <p className="text-xs text-gray-400 italic">{t.noTags}</p>
             ) : (
-              tags.map(tag => {
-                const isSelected = selectedTags.includes(tag.id);
-                return collapsed ? (
+              tags.map(tag => 
+                collapsed ? (
                   // Collapsed mode: show colored dots
                   <button
                     key={tag.id}
                     onClick={() => toggleTagFilter(tag.id)}
                     className={`
                       w-full flex items-center justify-center py-2 rounded-lg transition-colors
-                      ${isSelected ? 'bg-green-50 ring-2 ring-green-200' : 'hover:bg-gray-50'}
+                      ${selectedTags.includes(tag.id) ? 'bg-green-50 ring-2 ring-green-200' : 'hover:bg-gray-50'}
                     `}
                     title={tag.name}
                   >
@@ -110,30 +111,14 @@ export function Sidebar({ isCollapsed = false, onToggleCollapse }: SidebarProps)
                     />
                   </button>
                 ) : (
-                  // Expanded mode: full display
-                  <button
-                    key={tag.id}
-                    onClick={() => toggleTagFilter(tag.id)}
-                    className={`
-                      w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors
-                      ${isSelected
-                        ? 'bg-green-50 text-green-700 border border-green-200'
-                        : 'hover:bg-gray-50 text-gray-700'
-                      }
-                    `}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span 
-                        className="w-2 h-2 rounded-full flex-shrink-0" 
-                        style={{ backgroundColor: tag.color || '#ccc' }}
-                      />
-                      <span className="truncate">{tag.name}</span>
-                    </div>
-                    <span className="text-xs text-gray-400 flex-shrink-0 ml-2">{tag.count || 0}</span>
-                  </button>
-                );
-              })
+                  // Expanded mode: use TagManager for edit/delete
+                  <TagManager key={tag.id} tag={tag} isCollapsed={collapsed} />
+                )
+              )
             )}
+            
+            {/* Create New Tag */}
+            {!collapsed && <div className="pt-2"><CreateTagButton /></div>}
           </div>
         </div>
 
@@ -198,6 +183,13 @@ export function Sidebar({ isCollapsed = false, onToggleCollapse }: SidebarProps)
           </button>
         )}
       </div>
+
+      {/* Upcoming Memos - Only show when not collapsed */}
+      {!collapsed && (
+        <div className="p-4 border-t border-gray-200">
+          <UpcomingMemos />
+        </div>
+      )}
 
       {/* Footer */}
       {!collapsed && (

@@ -38,15 +38,24 @@ export function WeekView() {
 
       {/* Content */}
       <div className="flex-1 grid grid-cols-7 divide-x divide-gray-200">
-        {weekDays.map((day, index) => (
-          <DayCell 
-            key={index} 
-            date={day} 
-            memos={expandedMemos.filter(m => isSameDay(new Date(m.date), day))}
-            isWeekView={true}
-            isToday={isToday(day)}
-          />
-        ))}
+        {weekDays.map((day, index) => {
+          const dayMemos = expandedMemos.filter(m => {
+            const memoDate = new Date(m.date);
+            const match = isSameDay(memoDate, day);
+            console.log(`[WeekView] Day ${index}: memo.date=${m.date}, match=${match}`);
+            return match;
+          });
+          console.log(`[WeekView] Day ${index} (${day.toISOString()}): ${dayMemos.length} memos`);
+          return (
+            <DayCell 
+              key={index} 
+              date={day} 
+              memos={dayMemos}
+              isWeekView={true}
+              isToday={isToday(day)}
+            />
+          );
+        })}
       </div>
     </div>
   );

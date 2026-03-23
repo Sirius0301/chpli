@@ -2,7 +2,7 @@ import { useMemoStore } from '@/stores/memoStore';
 import { getLunarDate } from '@/utils/calendar';
 import { MemoItem } from './MemoItem';
 import type { MemoWithInstance } from '@chpli/calendar-memo-shared';
-import { format } from 'date-fns';
+import { format, differenceInDays, isSameDay } from 'date-fns';
 import { useMemo } from 'react';
 import { useI18n, formatTemplate } from '@/i18n';
 
@@ -24,11 +24,43 @@ function sortMemos(memos: MemoWithInstance[]): MemoWithInstance[] {
 }
 
 export function DayCell({ date, memos, isWeekView, isCurrentMonth = true, isToday = false }: DayCellProps) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { setSelectedDate, openDetailPanel, selectMemo, isHighlightToday } = useMemoStore();
   
   const shouldHighlightMemos = isHighlightToday && isToday;
   const lunar = getLunarDate(date);
+  
+  // 计算紧急程度
+  const urgencyInfo = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const cellDate = new Date(date);
+    cellDate.setHours(0, 0, 0, 0);
+    
+    const daysDiff = differenceInDays(cellDate, today);
+    
+    // 检查是否有高优先级未完成事项
+    const hasHighPriority = memos.some(m => !m.completed && m.priority === 'high');
+    const hasUncompleted = memos.some(m => !m.completed);
+    
+    const today2 = new Date();
+    const tomorrow2 = new Date(today2);
+    tomorrow2.setDate(tomorrow2.getDate() + 1);
+    
+    if (isSameDay(date, today2) && hasHighPriority) {
+      return { level: 'urgent', label: language === 'zh' ? '今' : 'TD', color: 'bg-red-500' };
+    }
+    if (isSameDay(date, today2) && hasUncompleted) {
+      return { level: 'today', label: language === 'zh' ? '今' : 'TD', color: 'bg-orange-500' };
+    }
+    if (isSameDay(date, tomorrow2) && hasHighPriority) {
+      return { level: 'tomorrow-important', label: language === 'zh' ? '明' : 'TM', color: 'bg-yellow-500' };
+    }
+    if (daysDiff > 0 && daysDiff <= 3 && hasHighPriority) {
+      return { level: 'soon', label: `${daysDiff}d`, color: 'bg-blue-500' };
+    }
+    return null;
+  }, [date, memos, language]);
 
   // Sort and limit memos
   const { displayMemos, hasMore, remainingCount } = useMemo(() => {
@@ -74,7 +106,12 @@ export function DayCell({ date, memos, isWeekView, isCurrentMonth = true, isToda
             </span>
           )}
         </div>
-        {lunar.jieQi && (
+        {/* 紧急程度标记 - 优先显示 */}
+        {urgencyInfo ? (
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full text-white font-medium ${urgencyInfo.color}`}>
+            {urgencyInfo.label}
+          </span>
+        ) : lunar.jieQi && (
           <span className={`hidden sm:inline text-[10px] px-1.5 py-0.5 rounded ${
             isToday ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
           }`}>

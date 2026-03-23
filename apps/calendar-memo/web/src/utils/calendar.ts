@@ -100,6 +100,12 @@ export function isMemoMatchDate(memo: Memo, targetDate: Date): boolean {
       return target.getDate() === start.getDate() && 
              target.getMonth() === start.getMonth();
 
+    case 'custom':
+      // 自定义重复：检查目标日期是星期几，看是否在 customDays 中
+      if (!memo.customDays || memo.customDays.length === 0) return false;
+      const targetDayOfWeek = target.getDay(); // 0=周日, 1=周一, ..., 6=周六
+      return memo.customDays.includes(targetDayOfWeek);
+
     default:
       return false;
   }

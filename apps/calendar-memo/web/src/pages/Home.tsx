@@ -10,6 +10,7 @@ import { DayView } from '@/components/DayView';
 import { WeekView } from '@/components/WeekView';
 import { MonthView } from '@/components/MonthView';
 import { DetailPanel } from '@/components/DetailPanel';
+import { requestNotificationPermission, startReminderCheck, stopReminderCheck } from '@/utils/notifications';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -35,8 +36,30 @@ export const Home: React.FC = () => {
     if (user) {
       fetchMemos();
       fetchTags();
+      
+      // 请求通知权限
+      requestNotificationPermission();
     }
   }, [fetchMemos, fetchTags, user]);
+  
+  // 启动提醒检查 - 监听备忘录变化
+  useEffect(() => {
+    if (!user) return;
+    
+    startReminderCheck(() => {
+      return useMemoStore.getState().expandedMemos.map(m => ({
+        id: m.id,
+        title: m.title,
+        date: m.date,
+        completed: m.completed,
+        priority: m.priority,
+      }));
+    });
+    
+    return () => {
+      stopReminderCheck();
+    };
+  }, [user]);
 
   if (isLoading) {
     return (

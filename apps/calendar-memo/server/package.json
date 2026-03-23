@@ -10,7 +10,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "db:seed": "echo 'No seed script'",
+    "db:seed": "tsx scripts/seed-test-data.ts",
     "migrate:completions": "tsx scripts/migrate-memo-completions.ts"
   },
   "dependencies": {

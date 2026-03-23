@@ -33,6 +33,7 @@ export function DetailPanel() {
     repeatType: 'none',
     repeatEndType: 'never',
     repeatEndDate: undefined,
+    customDays: [],
     priority: undefined,
     tagIds: [],
     imageUrl: '',
@@ -54,6 +55,7 @@ export function DetailPanel() {
         repeatType: existingMemo.repeatType,
         repeatEndType: existingMemo.repeatEndType,
         repeatEndDate: existingMemo.repeatEndDate,
+        customDays: existingMemo.customDays || [],
         priority: existingMemo.priority || undefined,
         tagIds: existingMemo.tags.map(t => t.id),
         imageUrl: existingMemo.imageUrl || '',
@@ -68,6 +70,7 @@ export function DetailPanel() {
         repeatType: 'none',
         repeatEndType: 'never',
         repeatEndDate: undefined,
+        customDays: [],
         priority: undefined,
         tagIds: [],
         imageUrl: '',
@@ -85,6 +88,7 @@ export function DetailPanel() {
     { value: 'quarterly', label: t.repeatQuarterly },
     { value: 'semiannual', label: t.repeatSemiannual },
     { value: 'yearly', label: t.repeatYearly },
+    { value: 'custom', label: t.repeatCustom },
   ] as const;
 
   const priorityOptions = [
@@ -106,6 +110,7 @@ export function DetailPanel() {
       repeatType: formData.repeatType || 'none',
       repeatEndType: formData.repeatEndType || 'never',
       repeatEndDate: formData.repeatEndDate,
+      customDays: formData.customDays,
       priority: formData.priority,
       tagIds: formData.tagIds || [],
       imageUrl: formData.imageUrl,
@@ -321,6 +326,41 @@ export function DetailPanel() {
             ))}
           </select>
         </div>
+
+        {/* Custom Repeat Days */}
+        {formData.repeatType === 'custom' && (
+          <div className="space-y-2 pl-4 border-l-2 border-gray-200">
+            <label className="block text-sm font-medium text-gray-700">{t.customRepeatTitle}</label>
+            <p className="text-xs text-gray-500">{t.customRepeatDesc}</p>
+            <div className="flex gap-2 flex-wrap">
+              {t.weekDaysFull.map((day, index) => {
+                const isSelected = formData.customDays?.includes(index) || false;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => {
+                      const currentDays = formData.customDays || [];
+                      const newDays = isSelected
+                        ? currentDays.filter(d => d !== index)
+                        : [...currentDays, index].sort();
+                      setFormData(prev => ({ ...prev, customDays: newDays }));
+                    }}
+                    className={`
+                      w-10 h-10 rounded-lg text-sm font-medium transition-all
+                      ${isSelected
+                        ? 'bg-green-500 text-white shadow-sm'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }
+                    `}
+                  >
+                    {day.slice(0, 2)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* End Repeat */}
         {formData.repeatType !== 'none' && (
