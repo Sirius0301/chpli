@@ -11,7 +11,7 @@ echo ""
 
 # 1. 确认代码最新
 echo "📥 拉取最新代码..."
-git pull origin main  # 或你的分支名
+git pull gitee master  # 或你的分支名
 echo "✅ 代码已更新"
 echo ""
 
