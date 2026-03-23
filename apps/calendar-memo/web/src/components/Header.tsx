@@ -54,7 +54,7 @@ export function Header() {
     if (viewMode === 'day') {
       return format(selectedDate, t.dateFormatDay, { locale });
     } else if (viewMode === 'week') {
-      return formatTemplate(t.dateFormatWeek, { w: format(selectedDate, 'w', { locale }) });
+      return formatTemplate(t.dateFormatWeek, { w: format(selectedDate, 'w', { locale }), year: format(selectedDate, 'yyyy', { locale }) });
     } else {
       return format(selectedDate, t.dateFormatMonth, { locale });
     }
