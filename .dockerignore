@@ -1,0 +1,50 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Node modules (will be installed in container)
+node_modules
+**/node_modules
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Documentation
+README.md
+*.md
+!MIGRATE.md
+
+# Environment files (except example)
+.env
+.env.local
+.env.*.local
+
+# Docker files themselves
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Build outputs (will be rebuilt)
+dist
+build
