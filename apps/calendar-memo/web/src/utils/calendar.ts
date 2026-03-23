@@ -1,6 +1,6 @@
 import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, addWeeks, differenceInWeeks, differenceInMonths } from 'date-fns';
 import { Solar, Lunar } from 'lunar-javascript';
-import type { Memo, MemoWithInstance } from '@chpli/calendar-memo-shared';
+import type { Memo, MemoWithInstance } from '../types';
 
 /**
  * 获取周视图日期范围（周日开始）

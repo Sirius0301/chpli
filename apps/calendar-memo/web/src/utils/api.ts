@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Memo, Tag, CreateMemoDTO, UpdateMemoDTO, ApiResponse, ToggleCompleteDTO } from '@chpli/calendar-memo-shared';
+import type { Memo, Tag, CreateMemoDTO, UpdateMemoDTO, ApiResponse, ToggleCompleteDTO } from '../types';
 
 const api = axios.create({
   baseURL: '/api',

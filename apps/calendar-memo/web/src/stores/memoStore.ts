@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import type { Memo, Tag, ViewMode, MemoWithInstance } from '@chpli/calendar-memo-shared';
+import type { Memo, Tag, ViewMode, MemoWithInstance } from '../types';
 import { memoApi, tagApi } from '@/utils/api';
 import { getWeekDays, getMonthDays, expandMemoToRange, formatDate, parseDate } from '@/utils/calendar';
 

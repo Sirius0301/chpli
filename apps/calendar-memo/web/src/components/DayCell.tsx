@@ -1,7 +1,7 @@
 import { useMemoStore } from '@/stores/memoStore';
 import { getLunarDate } from '@/utils/calendar';
 import { MemoItem } from './MemoItem';
-import type { MemoWithInstance } from '@chpli/calendar-memo-shared';
+import type { MemoWithInstance } from '../types';
 import { format, differenceInDays, isSameDay } from 'date-fns';
 import { useMemo } from 'react';
 import { useI18n, formatTemplate } from '@/i18n';

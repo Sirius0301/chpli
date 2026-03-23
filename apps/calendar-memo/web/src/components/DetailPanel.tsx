@@ -4,7 +4,7 @@ import { uploadApi } from '@/utils/api';
 import { format } from 'date-fns';
 import { getLunarDate } from '@/utils/calendar';
 import { useI18n, formatTemplate } from '@/i18n';
-import type { Memo, CreateMemoDTO } from '@chpli/calendar-memo-shared';
+import type { Memo, CreateMemoDTO } from '../types';
 
 export function DetailPanel() {
   const { t } = useI18n();

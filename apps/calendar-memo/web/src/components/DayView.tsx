@@ -5,7 +5,7 @@ import { MemoItem } from './MemoItem';
 import { getLunarDate } from '@/utils/calendar';
 import { useMemo } from 'react';
 import { useI18n, formatTemplate } from '@/i18n';
-import type { MemoWithInstance } from '@chpli/calendar-memo-shared';
+import type { MemoWithInstance } from '../types';
 
 // Sort memos: incomplete first, completed last
 function sortMemos(memos: MemoWithInstance[]): MemoWithInstance[] {

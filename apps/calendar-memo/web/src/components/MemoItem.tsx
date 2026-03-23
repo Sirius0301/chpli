@@ -1,5 +1,5 @@
 import { useMemoStore } from '@/stores/memoStore';
-import type { MemoWithInstance } from '@chpli/calendar-memo-shared';
+import type { MemoWithInstance } from '../types';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 

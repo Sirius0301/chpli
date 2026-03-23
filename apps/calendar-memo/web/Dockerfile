@@ -1,50 +1,33 @@
 # Multi-stage build for Calendar Memo Web
-
-# Stage 1: Build
 FROM node:20-alpine AS builder
 
-# Install build dependencies for native modules (bcrypt, etc.)
-RUN apk add --no-cache python3 make g++ libc6-compat
-
-# 构建参数
 ARG VITE_API_URL=http://localhost:3001
 ENV VITE_API_URL=${VITE_API_URL}
 
-# Install pnpm
-RUN npm install -g pnpm
-
-# Set working directory
 WORKDIR /app
 
-# Copy workspace files first (for better caching)
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+# 复制 package.json（已移除 workspace 依赖）
+COPY apps/calendar-memo/web/package.json ./
+RUN sed -i '/@chpli\/calendar-memo-shared/d' package.json
 
-# Copy shared package
-COPY apps/calendar-memo/shared ./apps/calendar-memo/shared
+# 复制其他配置文件
+COPY apps/calendar-memo/web/tsconfig.json apps/calendar-memo/web/tsconfig.node.json \
+     apps/calendar-memo/web/vite.config.ts apps/calendar-memo/web/tailwind.config.js \
+     apps/calendar-memo/web/postcss.config.js apps/calendar-memo/web/index.html \
+     apps/calendar-memo/web/nginx.conf ./
 
-# Copy web app source code
-COPY apps/calendar-memo/web ./apps/calendar-memo/web
+# 复制源码
+COPY apps/calendar-memo/web/src ./src
 
-# Install dependencies (bcrypt may need compilation)
-RUN pnpm install --frozen-lockfile
+# 安装依赖（纯前端包）
+RUN npm install
 
-# Build the web app
-WORKDIR /app/apps/calendar-memo/web
-RUN pnpm build
-
-# Debug: Show build output
-RUN echo "=== Build Output ===" && \
-    ls -la /app/apps/calendar-memo/web/dist/
+# 构建
+RUN npm run build
 
 # Stage 2: Serve with nginx
 FROM nginx:alpine
-
-# Copy built assets
-COPY --from=builder /app/apps/calendar-memo/web/dist /usr/share/nginx/html
-
-# Copy nginx config
-COPY apps/calendar-memo/web/nginx.conf /etc/nginx/conf.d/default.conf
-
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMemoStore } from '@/stores/memoStore';
 import { useI18n } from '@/i18n';
-import type { Tag } from '@chpli/calendar-memo-shared';
+import type { Tag } from '../types';
 
 interface TagManagerProps {
   tag: Tag;
