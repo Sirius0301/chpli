@@ -16,6 +16,8 @@ interface MemoState {
   selectedMemoId: string | null;
   isDetailPanelOpen: boolean;
   isHighlightToday: boolean; // 高亮今天的备忘录
+  isSidebarOpen: boolean; // 侧边栏展开状态（小屏幕用）
+  isSidebarCollapsed: boolean; // 侧边栏收缩状态（大屏幕用）
 
   // 筛选状态
   selectedTags: string[];
@@ -33,6 +35,10 @@ interface MemoState {
   selectMemo: (id: string | null) => void;
   openDetailPanel: () => void;
   closeDetailPanel: () => void;
+  toggleSidebar: () => void;
+  openSidebar: () => void;
+  closeSidebar: () => void;
+  toggleSidebarCollapse: () => void;
   toggleTagFilter: (tagId: string) => void;
   togglePriorityFilter: (priority: 'high' | 'medium' | 'low') => void;
   clearFilters: () => void;
@@ -62,6 +68,8 @@ export const useMemoStore = create<MemoState>()(
         selectedMemoId: null,
         isDetailPanelOpen: false,
         isHighlightToday: false,
+        isSidebarOpen: false,
+        isSidebarCollapsed: false,
         selectedTags: [],
         selectedPriorities: [],
         isLoading: false,
@@ -90,6 +98,10 @@ export const useMemoStore = create<MemoState>()(
 
         openDetailPanel: () => set({ isDetailPanelOpen: true }),
         closeDetailPanel: () => set({ isDetailPanelOpen: false, selectedMemoId: null }),
+        toggleSidebar: () => set(state => ({ isSidebarOpen: !state.isSidebarOpen })),
+        openSidebar: () => set({ isSidebarOpen: true }),
+        closeSidebar: () => set({ isSidebarOpen: false }),
+        toggleSidebarCollapse: () => set(state => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
 
         // 筛选 Actions
         toggleTagFilter: (tagId) => {

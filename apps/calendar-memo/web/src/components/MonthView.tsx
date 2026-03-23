@@ -16,7 +16,7 @@ export function MonthView() {
         {t.weekDaysShort.map((day, index) => (
           <div 
             key={index} 
-            className="py-2 text-center text-sm font-medium text-gray-600 border-r border-gray-200 last:border-r-0"
+            className="py-1 sm:py-2 text-center text-xs sm:text-sm font-medium text-gray-600 border-r border-gray-200 last:border-r-0"
           >
             {day}
           </div>

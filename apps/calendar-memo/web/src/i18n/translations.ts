@@ -70,6 +70,8 @@ export interface TranslationKeys {
   clearAllFilters: string;
   shortcuts: string;
   clickDateToCreate: string;
+  collapseSidebar: string;
+  expandSidebar: string;
 
   // Detail Panel
   newMemoTitle: string;
@@ -181,10 +183,10 @@ export const translations: Record<Language, TranslationKeys> = {
     logoutTitle: "退出登录",
 
     // Header
-    today: "Today",
-    dayView: "Day",
-    weekView: "Week",
-    monthView: "Month",
+    today: "今天",
+    dayView: "日",
+    weekView: "周",
+    monthView: "月",
     newMemo: "新建备忘录",
 
     // Sidebar
@@ -199,6 +201,8 @@ export const translations: Record<Language, TranslationKeys> = {
     clearAllFilters: "清除所有筛选",
     shortcuts: "快捷键提示",
     clickDateToCreate: "点击日期格子快速创建",
+    collapseSidebar: "收起",
+    expandSidebar: "展开",
 
     // Detail Panel
     newMemoTitle: "新建备忘录",
@@ -247,7 +251,7 @@ export const translations: Record<Language, TranslationKeys> = {
 
     // Week/Month View
     weekDays: ["日", "一", "二", "三", "四", "五", "六"],
-    weekDaysShort: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    weekDaysShort: ["日", "一", "二", "三", "四", "五", "六"],
 
     // Date Format
     dateFormatDay: "yyyy年M月d日",
@@ -327,6 +331,8 @@ export const translations: Record<Language, TranslationKeys> = {
     clearAllFilters: "Clear all filters",
     shortcuts: "Shortcuts",
     clickDateToCreate: "Click date cell to create",
+    collapseSidebar: "Collapse",
+    expandSidebar: "Expand",
 
     // Detail Panel
     newMemoTitle: "New Memo",

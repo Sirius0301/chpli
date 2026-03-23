@@ -22,13 +22,13 @@ export function WeekView() {
                 dayIsToday ? 'bg-green-100' : ''
               }`}
             >
-              <div className={`text-xs mb-1 ${dayIsToday ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
+              <div className={`text-[10px] sm:text-xs mb-0.5 sm:mb-1 ${dayIsToday ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
                 {t.weekDaysShort[index]}
               </div>
-              <div className={`text-sm font-medium ${dayIsToday ? 'text-green-600' : 'text-gray-900'}`}>
-                {formatDate(day).split('-')[2]}{language === 'zh' ? '日' : ''}
+              <div className={`text-sm sm:text-base font-medium ${dayIsToday ? 'text-green-600' : 'text-gray-900'}`}>
+                {formatDate(day).split('-')[2]}{language === 'zh' ? '' : ''}
               </div>
-              <div className={`text-xs mt-0.5 ${dayIsToday ? 'text-green-500' : 'text-gray-400'}`}>
+              <div className={`hidden sm:block text-xs mt-0.5 ${dayIsToday ? 'text-green-500' : 'text-gray-400'}`}>
                 {t.weekDays[index]}
               </div>
             </div>

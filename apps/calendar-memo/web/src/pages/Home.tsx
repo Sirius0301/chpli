@@ -20,6 +20,9 @@ export const Home: React.FC = () => {
     fetchMemos, 
     fetchTags, 
     isDetailPanelOpen,
+    isSidebarOpen,
+    isSidebarCollapsed,
+    closeSidebar,
   } = useMemoStore();
 
   useEffect(() => {
@@ -49,21 +52,60 @@ export const Home: React.FC = () => {
 
   return (
     <Layout>
-      <div className="flex h-screen bg-gray-50">
-        {/* Sidebar */}
-        <Sidebar />
+      <div className="flex h-screen bg-gray-50 overflow-hidden">
+        {/* Sidebar - Desktop: always visible, can be collapsed */}
+        <div className={`
+          hidden lg:block flex-shrink-0 transition-all duration-300 ease-in-out
+          ${isSidebarCollapsed ? 'w-16' : 'w-64'}
+        `}>
+          <Sidebar />
+        </div>
+
+        {/* Sidebar - Mobile: overlay drawer */}
+        {/* Backdrop */}
+        {isSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={closeSidebar}
+          />
+        )}
+        {/* Mobile Sidebar Drawer */}
+        <div className={`
+          fixed inset-y-0 left-0 z-50 lg:hidden
+          transform transition-transform duration-300 ease-in-out
+          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}>
+          <Sidebar />
+        </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <Header />
-          <main className="flex-1 overflow-auto p-4">
-            {viewMode === 'day' ? <DayView /> : viewMode === 'week' ? <WeekView /> : <MonthView />}
+          <main className="flex-1 overflow-auto p-2 sm:p-4">
+            <div className="min-w-[320px]">
+              {viewMode === 'day' ? <DayView /> : viewMode === 'week' ? <WeekView /> : <MonthView />}
+            </div>
           </main>
         </div>
 
-        {/* Detail Panel */}
+        {/* Detail Panel - Desktop: side panel, Mobile: overlay */}
         {isDetailPanelOpen && (
-          <DetailPanel />
+          <>
+            {/* Mobile: full screen overlay with backdrop */}
+            <div className="lg:hidden fixed inset-0 z-50">
+              <div 
+                className="absolute inset-0 bg-black/50"
+                onClick={() => useMemoStore.getState().closeDetailPanel()}
+              />
+              <div className="absolute inset-x-0 bottom-0 top-16 bg-white rounded-t-2xl shadow-2xl overflow-hidden">
+                <DetailPanel />
+              </div>
+            </div>
+            {/* Desktop: side panel */}
+            <div className="hidden lg:block flex-shrink-0">
+              <DetailPanel />
+            </div>
+          </>
         )}
       </div>
     </Layout>

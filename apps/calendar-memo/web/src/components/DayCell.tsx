@@ -50,7 +50,7 @@ export function DayCell({ date, memos, isWeekView, isCurrentMonth = true, isToda
 
   return (
     <div 
-      className={`relative p-2 min-h-[120px] cursor-pointer transition-all duration-300 ${
+      className={`relative p-1 sm:p-2 min-h-[80px] sm:min-h-[120px] cursor-pointer transition-all duration-300 ${
         !isCurrentMonth ? 'bg-gray-50/50 text-gray-400' : ''
       } ${isToday ? 'bg-green-50' : ''} ${
         shouldHighlightMemos ? 'ring-2 ring-inset ring-green-400 bg-green-50' : 'hover:bg-gray-50'
@@ -61,21 +61,21 @@ export function DayCell({ date, memos, isWeekView, isCurrentMonth = true, isToda
       }}
     >
       {/* Date Header */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-baseline gap-2">
-          <span className={`text-lg font-semibold ${
+      <div className="flex items-center justify-between mb-1 sm:mb-2">
+        <div className="flex items-baseline gap-1 sm:gap-2">
+          <span className={`text-sm sm:text-lg font-semibold ${
             isToday ? 'text-green-600' : 'text-gray-900'
           } ${shouldHighlightMemos ? 'scale-110 inline-block' : ''}`}>
             {format(date, 'd')}
           </span>
           {!isWeekView && (
-            <span className={`text-xs ${isToday ? 'text-green-500' : 'text-gray-500'}`}>
+            <span className={`hidden sm:inline text-xs ${isToday ? 'text-green-500' : 'text-gray-500'}`}>
               {lunar.day}
             </span>
           )}
         </div>
         {lunar.jieQi && (
-          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+          <span className={`hidden sm:inline text-[10px] px-1.5 py-0.5 rounded ${
             isToday ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
           }`}>
             {lunar.jieQi}
