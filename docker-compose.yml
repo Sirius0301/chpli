@@ -72,8 +72,8 @@ services:
     networks:
       - chpli-network
     profiles:
-      - migrate  # 只在指定时运行: docker-compose --profile migrate up db-migrate
-    restart: "no"  # 只运行一次，不重启
+      - migrate # 只在指定时运行: docker-compose --profile migrate up db-migrate
+    restart: "no" # 只运行一次，不重启
 
   # Backend Server
   server:
@@ -108,16 +108,36 @@ services:
       - "80"
     container_name: chpli-web
     restart: unless-stopped
-    ports:
-      - "${WEB_PORT:-5173}:80"
+    # ports:
+    #   - "${WEB_PORT:-5173}:80"
     depends_on:
       - server
+    networks:
+      - chpli-network
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: chpli-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
     networks:
       - chpli-network
 
 volumes:
   postgres_data:
     name: chpli_postgres_data
+  caddy_data:
+    name: chpli_caddy_data
+  caddy_config:
+    name: chpli_caddy_config
 
 networks:
   chpli-network:
