@@ -3,7 +3,7 @@ import { format, isSameDay } from 'date-fns';
 import { zhCN, enUS } from 'date-fns/locale';
 import { MemoItem } from './MemoItem';
 import { getLunarDate } from '@/utils/calendar';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useI18n, formatTemplate } from '@/i18n';
 import type { MemoWithInstance } from '../types';
 
@@ -28,6 +28,8 @@ export function DayView() {
     selectMemo,
   } = useMemoStore();
 
+  const [showAll, setShowAll] = useState(false);
+
   // Filter memos for selected date
   const { displayMemos, hasMore, totalCount } = useMemo(() => {
     const dayMemos = expandedMemos.filter(m => {
@@ -40,15 +42,15 @@ export function DayView() {
     });
 
     const sorted = sortMemos(dayMemos);
-    const limit = 10;
+    const limit = showAll ? sorted.length : 10;
     const display = sorted.slice(0, limit);
     
     return {
       displayMemos: display,
-      hasMore: sorted.length > limit,
+      hasMore: !showAll && sorted.length > 10,
       totalCount: sorted.length,
     };
-  }, [expandedMemos, selectedDate]);
+  }, [expandedMemos, selectedDate, showAll]);
 
   // Get lunar date
   const lunarDate = getLunarDate(selectedDate);
@@ -123,7 +125,13 @@ export function DayView() {
               ))}
             </div>
             {hasMore && (
-              <div className="text-sm text-gray-400 text-center py-3 bg-gray-50 rounded-lg">
+              <div 
+                className="text-sm text-gray-400 text-center py-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 hover:text-green-600 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAll(true);
+                }}
+              >
                 {formatTemplate(t.moreItems, { count: totalCount - 10 })}
               </div>
             )}
