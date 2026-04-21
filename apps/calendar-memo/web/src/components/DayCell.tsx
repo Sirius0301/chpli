@@ -131,6 +131,7 @@ export function DayCell({ date, memos, isWeekView, isCurrentMonth = true, isToda
             key={`${memo.id}-${memo.instanceDate || memo.date}`} 
             memo={memo} 
             isHighlighted={shouldHighlightMemos}
+            compact={!isWeekView}
           />
         ))}
         {hasMore && (

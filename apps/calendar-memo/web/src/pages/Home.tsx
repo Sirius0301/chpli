@@ -105,7 +105,7 @@ export const Home: React.FC = () => {
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <Header />
           <main className="flex-1 overflow-auto p-2 sm:p-4">
-            <div className="min-w-[320px] h-full">
+            <div className={`min-w-[320px] ${viewMode === 'month' ? '' : 'h-full'}`}>
               {viewMode === 'day' ? <DayView /> : viewMode === 'week' ? <WeekView /> : <MonthView />}
             </div>
           </main>
