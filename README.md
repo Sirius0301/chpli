@@ -7,19 +7,36 @@
 ### 方式一：使用 start.sh 脚本（推荐）
 
 ```bash
-# 1. 给脚本添加执行权限
-chmod +x start.sh stop.sh
+# 1. 安装新依赖（如果有 package.json 变更）
+pnpm install
+cd apps/calendar-memo/server && pnpm install
+cd ../web && pnpm install
 
-# 2. 一键启动所有服务
-./start.sh
+# 2. 重新生成 Prisma Client（如果 schema 有变更）
+cd ../server
+npx prisma generate
+npx prisma db push --accept-data-loss
 
-# 3. 访问应用
-# 前端: http://localhost:5173
-# 后端: http://localhost:3001
-
-# 4. 停止服务
+# 3. 重启服务
+# 先停止旧进程
 ./stop.sh
+# 或手动杀进程
+lsof -ti:3001 | xargs kill -9
+lsof -ti:5173 | xargs kill -9
+
+# 4. 重新启动
+./start.sh
 ```
+
+### 关键提醒
+
+| 场景 | 操作 |
+|------|------|
+| **只改了前端代码** | Docker 下只需 `docker-compose build --no-cache web && docker-compose up -d web` |
+| **只改了后端代码** | Docker 下只需 `docker-compose build --no-cache server && docker-compose up -d server` |
+| **改了数据库 Schema** | 本地需要 `npx prisma generate && npx prisma db push`；Docker 下会自动执行 |
+| **从旧版本升级** | 可能需要运行数据迁移：`docker-compose --profile migrate up db-migrate` |
+
 
 ### 方式二：手动启动
 
@@ -44,6 +61,28 @@ pnpm dev
 ```
 
 访问 http://localhost:5173
+
+### 方式三：手动启动
+
+```bash
+# 1. 拉取最新代码
+git pull origin main   # 根据你的仓库调整
+
+# 2. 停止旧容器
+docker-compose down
+
+# 3. 重新构建镜像（不用缓存，确保新代码被打包）
+docker-compose build --no-cache web server
+
+# 4. 启动服务
+docker-compose up -d
+
+# 5. 查看状态
+docker-compose ps
+docker-compose logs -f
+```
+
+
 
 ### Docker 部署
 
