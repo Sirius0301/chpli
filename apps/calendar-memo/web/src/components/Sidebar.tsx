@@ -34,7 +34,7 @@ export function Sidebar({ isCollapsed = false, onToggleCollapse }: SidebarProps)
   return (
     <aside 
       className={`
-        bg-white border-r border-gray-200 flex flex-col h-full
+        bg-white border-r border-gray-200 flex flex-col h-full overflow-hidden
         transition-all duration-300 ease-in-out
         ${collapsed ? 'w-16' : 'w-64'}
       `}

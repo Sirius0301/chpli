@@ -162,7 +162,7 @@ export function DetailPanel() {
 
   return (
     <div className="
-      fixed inset-0 z-50 bg-white flex flex-col
+      fixed inset-0 z-50 bg-white flex flex-col h-full
       lg:static lg:w-96 lg:border-l lg:border-gray-200 lg:shadow-lg
     ">
       {/* Header */}

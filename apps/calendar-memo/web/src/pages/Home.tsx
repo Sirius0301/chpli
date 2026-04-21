@@ -78,7 +78,7 @@ export const Home: React.FC = () => {
       <div className="flex h-screen bg-gray-50 overflow-hidden">
         {/* Sidebar - Desktop: always visible, can be collapsed */}
         <div className={`
-          hidden lg:block flex-shrink-0 transition-all duration-300 ease-in-out
+          hidden lg:block flex-shrink-0 h-full transition-all duration-300 ease-in-out
           ${isSidebarCollapsed ? 'w-16' : 'w-64'}
         `}>
           <Sidebar />
@@ -105,7 +105,7 @@ export const Home: React.FC = () => {
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <Header />
           <main className="flex-1 overflow-auto p-2 sm:p-4">
-            <div className="min-w-[320px]">
+            <div className="min-w-[320px] h-full">
               {viewMode === 'day' ? <DayView /> : viewMode === 'week' ? <WeekView /> : <MonthView />}
             </div>
           </main>
@@ -125,7 +125,7 @@ export const Home: React.FC = () => {
               </div>
             </div>
             {/* Desktop: side panel */}
-            <div className="hidden lg:block flex-shrink-0">
+            <div className="hidden lg:block flex-shrink-0 h-full">
               <DetailPanel />
             </div>
           </>

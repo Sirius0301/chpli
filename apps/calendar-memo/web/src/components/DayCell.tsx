@@ -82,7 +82,7 @@ export function DayCell({ date, memos, isWeekView, isCurrentMonth = true, isToda
 
   return (
     <div 
-      className={`relative p-1 sm:p-2 min-h-[80px] sm:min-h-[120px] cursor-pointer transition-all duration-300 ${
+      className={`relative p-1 sm:p-2 min-h-[80px] sm:min-h-[120px] ${isWeekView ? 'h-full' : ''} cursor-pointer transition-all duration-300 ${
         !isCurrentMonth ? 'bg-gray-50/50 text-gray-400' : ''
       } ${isToday ? 'bg-green-50' : ''} ${
         shouldHighlightMemos ? 'ring-2 ring-inset ring-green-400 bg-green-50' : 'hover:bg-gray-50'

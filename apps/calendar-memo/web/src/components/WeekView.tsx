@@ -37,7 +37,7 @@ export function WeekView() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 grid grid-cols-7 divide-x divide-gray-200">
+      <div className="flex-1 grid grid-cols-7 grid-rows-1 divide-x divide-gray-200">
         {weekDays.map((day, index) => {
           const dayMemos = expandedMemos.filter(m => {
             const memoDate = new Date(m.date);
