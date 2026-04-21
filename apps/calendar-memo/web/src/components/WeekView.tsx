@@ -10,7 +10,7 @@ export function WeekView() {
   const weekDays = getWeekDays(selectedDate);
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="h-full flex flex-col bg-white rounded-lg border border-gray-200 overflow-auto">
       {/* Header */}
       <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
         {weekDays.map((day, index) => {
