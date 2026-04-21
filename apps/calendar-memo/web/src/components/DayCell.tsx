@@ -25,7 +25,7 @@ function sortMemos(memos: MemoWithInstance[]): MemoWithInstance[] {
 
 export function DayCell({ date, memos, isWeekView, isCurrentMonth = true, isToday = false }: DayCellProps) {
   const { t, language } = useI18n();
-  const { setSelectedDate, openDetailPanel, selectMemo, isHighlightToday } = useMemoStore();
+  const { setSelectedDate, setViewMode, openDetailPanel, selectMemo, isHighlightToday } = useMemoStore();
   
   const shouldHighlightMemos = isHighlightToday && isToday;
   const lunar = getLunarDate(date);
@@ -135,7 +135,14 @@ export function DayCell({ date, memos, isWeekView, isCurrentMonth = true, isToda
           />
         ))}
         {hasMore && (
-          <div className="text-xs text-gray-400 px-2 py-1">
+          <div 
+            className="text-xs text-gray-400 px-2 py-1 hover:text-green-600 cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedDate(date);
+              setViewMode('day');
+            }}
+          >
             {formatTemplate(t.moreItems, { count: remainingCount })}
           </div>
         )}
