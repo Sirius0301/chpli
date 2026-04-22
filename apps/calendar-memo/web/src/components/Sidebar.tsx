@@ -39,6 +39,24 @@ export function Sidebar({ isCollapsed = false, onToggleCollapse }: SidebarProps)
         ${collapsed ? 'w-16' : 'w-64'}
       `}
     >
+      {/* Back to Home */}
+      <button
+        onClick={() => {
+          if (window.parent !== window) {
+            window.parent.postMessage({ type: 'NAVIGATE_HOME' }, '*')
+          } else {
+            window.location.href = 'http://localhost:5173'
+          }
+        }}
+        className={`flex items-center text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors border-b border-gray-200 ${collapsed ? 'justify-center px-2 py-3' : 'gap-2 px-6 py-3 text-sm'}`}
+        title={collapsed ? '返回首页' : undefined}
+      >
+        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        {!collapsed && <span>返回首页</span>}
+      </button>
+
       {/* Logo/Title */}
       <div className={`p-4 border-b border-gray-200 ${collapsed ? 'px-2' : 'px-6'}`}>
         <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>

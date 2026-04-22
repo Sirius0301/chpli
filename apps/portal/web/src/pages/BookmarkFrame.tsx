@@ -1,7 +1,6 @@
 import React, { useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { ArrowLeft, Bookmark } from 'lucide-react'
 
 const BOOKMARK_URL = import.meta.env.VITE_BOOKMARK_URL || 'http://localhost:5174'
 
@@ -43,24 +42,18 @@ export const BookmarkFrame: React.FC = () => {
     }
   }, [token])
 
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'NAVIGATE_HOME') {
+        navigate('/home')
+      }
+    }
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [navigate])
+
   return (
     <div className="h-screen flex flex-col">
-      {/* Toolbar */}
-      <div className="h-12 bg-white border-b flex items-center px-4 justify-between shrink-0">
-        <button
-          onClick={() => navigate('/home')}
-          className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition"
-        >
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          返回首页
-        </button>
-        <div className="flex items-center text-sm font-medium text-gray-800">
-          <Bookmark className="w-4 h-4 mr-1.5 text-emerald-600" />
-          Bookmark Manager
-        </div>
-        <div className="w-16" />
-      </div>
-
       {/* Iframe */}
       <iframe
         ref={iframeRef}

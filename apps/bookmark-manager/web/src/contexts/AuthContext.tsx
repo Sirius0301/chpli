@@ -69,10 +69,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (event.source !== window.parent) return
       const { type, token: newToken } = event.data || {}
       if (type === 'AUTH_TOKEN' && newToken && newToken !== token) {
-        setIsLoading(true)
-        setToken(newToken)
         await fetchUser(newToken)
-        setIsLoading(false)
+        setToken(newToken)
       }
     }
 
@@ -85,12 +83,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const handleStorage = async (event: StorageEvent) => {
       if (event.key === 'token') {
         const newToken = event.newValue
-        if (newToken) {
-          setIsLoading(true)
-          setToken(newToken)
+        if (newToken && newToken !== token) {
           await fetchUser(newToken)
-          setIsLoading(false)
-        } else {
+          setToken(newToken)
+        } else if (!newToken && token) {
           clearToken()
           setUser(null)
           setToken(null)
@@ -99,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     window.addEventListener('storage', handleStorage)
     return () => window.removeEventListener('storage', handleStorage)
-  }, [])
+  }, [token])
 
   const logout = () => {
     clearToken()
