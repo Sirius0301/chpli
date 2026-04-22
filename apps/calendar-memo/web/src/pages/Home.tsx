@@ -61,13 +61,15 @@ export const Home: React.FC = () => {
     );
   }
 
-  // 未登录时显示等待状态（等待 Portal 通过 postMessage 传递 token）
+  // 未登录时重定向到登录页（Portal 入口）
   if (!user) {
+    const portalUrl = import.meta.env.VITE_PORTAL_URL || 'http://localhost:5173'
+    window.location.href = portalUrl
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="text-gray-600 mb-2">{t.loading}</div>
-          <p className="text-sm text-gray-400">等待认证...</p>
+          <p className="text-sm text-gray-400">正在跳转登录页...</p>
         </div>
       </div>
     );

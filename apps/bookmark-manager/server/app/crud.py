@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from uuid import UUID
-from sqlalchemy import select, update, delete, func, and_
+from sqlalchemy import select, update, delete, insert, func, and_
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models import Bookmark, Tag, ClickLog
+from app.models import Bookmark, Tag, ClickLog, bookmark_tags
 from app.schemas import BookmarkCreate, BookmarkUpdate, TagCreate, TagUpdate
 
 MAX_REQUIRED_BOOKMARKS = 5
@@ -51,10 +51,14 @@ async def create_bookmark(db: AsyncSession, data: BookmarkCreate, user_id: UUID)
         for tag_id in data.tag_ids:
             tag = await db.get(Tag, tag_id)
             if tag and tag.user_id == user_id:
-                bookmark.tags.append(tag)
+                await db.execute(
+                    insert(bookmark_tags).values(bookmark_id=bookmark.id, tag_id=tag.id)
+                )
     await db.commit()
-    await db.refresh(bookmark, attribute_names=["tags"])
-    return bookmark
+    result = await db.execute(
+        select(Bookmark).options(selectinload(Bookmark.tags)).where(Bookmark.id == bookmark.id)
+    )
+    return result.scalar_one()
 
 
 async def update_bookmark(
@@ -70,14 +74,20 @@ async def update_bookmark(
     if data.description is not None:
         bookmark.description = data.description
     if data.tag_ids is not None:
-        bookmark.tags = []
+        await db.execute(
+            delete(bookmark_tags).where(bookmark_tags.c.bookmark_id == bookmark_id)
+        )
         for tag_id in data.tag_ids:
             tag = await db.get(Tag, tag_id)
             if tag and tag.user_id == user_id:
-                bookmark.tags.append(tag)
+                await db.execute(
+                    insert(bookmark_tags).values(bookmark_id=bookmark.id, tag_id=tag.id)
+                )
     await db.commit()
-    await db.refresh(bookmark, attribute_names=["tags"])
-    return bookmark
+    result = await db.execute(
+        select(Bookmark).options(selectinload(Bookmark.tags)).where(Bookmark.id == bookmark.id)
+    )
+    return result.scalar_one()
 
 
 async def soft_delete_bookmark(db: AsyncSession, bookmark_id: UUID, user_id: UUID) -> bool:
@@ -218,6 +228,15 @@ async def create_tag(db: AsyncSession, data: TagCreate, user_id: UUID) -> Tag:
     await db.commit()
     await db.refresh(tag)
     return tag
+
+
+async def get_or_create_tag(db: AsyncSession, data: TagCreate, user_id: UUID) -> Tag:
+    stmt = select(Tag).where(Tag.user_id == user_id, Tag.name == data.name)
+    result = await db.execute(stmt)
+    tag = result.scalar_one_or_none()
+    if tag:
+        return tag
+    return await create_tag(db, data, user_id)
 
 
 async def update_tag(db: AsyncSession, tag_id: UUID, data: TagUpdate, user_id: UUID) -> Optional[Tag]:

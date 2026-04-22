@@ -1,10 +1,10 @@
 import json
 from datetime import datetime, timezone
+from html.parser import HTMLParser
 from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
-from bs4 import BeautifulSoup, Tag
 from app.database import get_db
 from app.auth import get_current_user_id
 from app import crud
@@ -261,31 +261,70 @@ async def export_bookmarks_html(
     )
 
 
-def _extract_netscape_links(element: Tag, folder_stack: list, result: list):
-    """递归提取 Netscape HTML 中的书签和文件夹标签"""
-    if not isinstance(element, Tag):
-        return
+class _NetscapeBookmarkParser(HTMLParser):
+    """解析 Chrome/Firefox 导出的 Netscape Bookmark HTML 文件。"""
 
-    for child in element.find_all(['dt', 'h3', 'a', 'dl'], recursive=False):
-        if child.name == 'h3':
-            # 文件夹名称作为标签
-            folder_name = child.get_text(strip=True)
-            if folder_name and folder_name != 'Bookmarks Bar':
-                folder_stack.append(folder_name)
-        elif child.name == 'a':
-            href = child.get('href', '')
-            title = child.get_text(strip=True) or href
-            if href:
-                tags = list(folder_stack)
-                result.append({'url': href, 'title': title, 'tags': tags})
-        elif child.name == 'dl':
-            _extract_netscape_links(child, folder_stack, result)
+    def __init__(self):
+        super().__init__()
+        self.folder_stack: List[str] = []
+        self.bookmarks: List[dict] = []
+        self._current_folder: Optional[str] = None
+        self._current_link: dict = {}
+        self._in_h3 = False
+        self._in_a = False
+        self._h3_text = ""
+        self._a_text = ""
 
-    # 清理当前层级的文件夹
-    for child in element.find_all('h3', recursive=False):
-        folder_name = child.get_text(strip=True)
-        if folder_name and folder_name != 'Bookmarks Bar' and folder_name in folder_stack:
-            folder_stack.remove(folder_name)
+    def handle_starttag(self, tag, attrs):
+        attrs_dict = dict(attrs)
+        tag_lower = tag.lower()
+        if tag_lower == "dl":
+            if self._current_folder:
+                self.folder_stack.append(self._current_folder)
+                self._current_folder = None
+        elif tag_lower == "h3":
+            self._in_h3 = True
+            self._h3_text = ""
+        elif tag_lower == "a":
+            self._in_a = True
+            self._a_text = ""
+            self._current_link = {
+                "url": attrs_dict.get("href", ""),
+                "title": "",
+                "tags": list(self.folder_stack),
+            }
+
+    def handle_endtag(self, tag):
+        tag_lower = tag.lower()
+        if tag_lower == "h3":
+            self._in_h3 = False
+            folder = self._h3_text.strip()
+            if folder and folder != "Bookmarks Bar":
+                self._current_folder = folder
+        elif tag_lower == "a":
+            self._in_a = False
+            self._current_link["title"] = self._a_text.strip() or self._current_link["url"]
+            if self._current_link.get("url"):
+                self.bookmarks.append(self._current_link)
+            self._current_link = {}
+        elif tag_lower == "dl":
+            if self.folder_stack:
+                self.folder_stack.pop()
+            elif self._current_folder:
+                self._current_folder = None
+
+    def handle_data(self, data):
+        if self._in_h3:
+            self._h3_text += data
+        elif self._in_a:
+            self._a_text += data
+
+
+def _extract_netscape_links(text: str) -> List[dict]:
+    """提取 Netscape HTML 中的书签和文件夹标签"""
+    parser = _NetscapeBookmarkParser()
+    parser.feed(text)
+    return parser.bookmarks
 
 
 @router.post("/import")
@@ -307,13 +346,13 @@ async def import_bookmarks(
         bookmarks_data = data.get("bookmarks", [])
         tags_data = data.get("tags", [])
         for t in tags_data:
-            tag = await crud.create_tag(db, TagCreate(name=t["name"], description=t.get("description")), uid)
+            tag = await crud.get_or_create_tag(db, TagCreate(name=t["name"], description=t.get("description")), uid)
             created_tags[t["name"]] = tag
         for b in bookmarks_data:
             tag_ids = []
             for tag_name in b.get("tags", []):
                 if tag_name not in created_tags:
-                    tag = await crud.create_tag(db, TagCreate(name=tag_name), uid)
+                    tag = await crud.get_or_create_tag(db, TagCreate(name=tag_name), uid)
                     created_tags[tag_name] = tag
                 tag_ids.append(created_tags[tag_name].id)
             await crud.create_bookmark(
@@ -326,20 +365,14 @@ async def import_bookmarks(
     except (json.JSONDecodeError, KeyError):
         pass
 
-    # Parse Netscape HTML (recursive DL/H3/A structure)
-    soup = BeautifulSoup(text, "html.parser")
-    root_dl = soup.find("dl")
-    if not root_dl:
-        raise HTTPException(status_code=400, detail="无法解析 HTML 书签文件，找不到 <DL> 根节点")
-
-    bookmarks_to_import = []
-    _extract_netscape_links(root_dl, [], bookmarks_to_import)
+    # Parse Netscape HTML
+    bookmarks_to_import = _extract_netscape_links(text)
 
     for item in bookmarks_to_import:
         tag_ids = []
         for tag_name in item.get("tags", []):
             if tag_name not in created_tags:
-                tag = await crud.create_tag(db, TagCreate(name=tag_name), uid)
+                tag = await crud.get_or_create_tag(db, TagCreate(name=tag_name), uid)
                 created_tags[tag_name] = tag
             tag_ids.append(created_tags[tag_name].id)
         await crud.create_bookmark(

@@ -332,12 +332,18 @@ start_service() {
   # 进入目录并启动
   cd "$PROJECT_ROOT/$dir"
 
+  # 加载目录下的 .env 文件（如果存在）
+  local env_exports=""
+  if [ -f ".env" ]; then
+    env_exports="set -a && source .env && set +a && "
+  fi
+
   if [ "$type" = "python" ]; then
     # Python 服务：激活 .venv 后启动
-    nohup bash -c "source .venv/bin/activate && $cmd" > "$logfile" 2>&1 &
+    nohup bash -c "${env_exports}source .venv/bin/activate && $cmd" > "$logfile" 2>&1 &
   else
     # Node 服务
-    nohup bash -c "$cmd" > "$logfile" 2>&1 &
+    nohup bash -c "${env_exports}$cmd" > "$logfile" 2>&1 &
   fi
 
   local pid=$!
@@ -463,7 +469,7 @@ main() {
 
   while IFS='|' read -r name dir cmd port type; do
     [ -z "$name" ] && continue
-    if [ "$type" = "node" ] && [[ "$name" == *-server* || "$name" == "user-manager" || "$name" == "bookmark-server" ]]; then
+    if [[ "$name" == *-server* || "$name" == "user-manager" || "$name" == "bookmark-server" ]]; then
       backend_services+=("$name|$dir|$cmd|$port|$type")
     else
       frontend_services+=("$name|$dir|$cmd|$port|$type")
