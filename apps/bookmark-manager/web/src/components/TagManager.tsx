@@ -1,50 +1,68 @@
-import { useState } from 'react'
-import { useTags, useCreateTag, useUpdateTag, useDeleteTag } from '@/hooks/useTags'
-import { X, Edit2, Trash2, Plus } from 'lucide-react'
+import { useState } from "react";
+import {
+  useTags,
+  useCreateTag,
+  useUpdateTag,
+  useDeleteTag,
+} from "@/hooks/useTags";
+import { X, Edit2, Trash2, Plus } from "lucide-react";
 
 interface Props {
-  onClose: () => void
+  onClose: () => void;
 }
 
 export default function TagManager({ onClose }: Props) {
-  const { data: tags, isLoading } = useTags()
-  const createMutation = useCreateTag()
-  const updateMutation = useUpdateTag()
-  const deleteMutation = useDeleteTag()
+  const { data: tags, isLoading } = useTags();
+  const createMutation = useCreateTag();
+  const updateMutation = useUpdateTag();
+  const deleteMutation = useDeleteTag();
 
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
 
   const handleCreate = () => {
-    if (!name.trim()) return
-    createMutation.mutate({ name, description: description || undefined }, {
-      onSuccess: () => {
-        setName('')
-        setDescription('')
+    if (!name.trim()) return;
+    createMutation.mutate(
+      { name, description: description || undefined },
+      {
+        onSuccess: () => {
+          setName("");
+          setDescription("");
+        },
       },
-    })
-  }
+    );
+  };
 
   const handleUpdate = (id: string) => {
-    if (!name.trim()) return
-    updateMutation.mutate({ id, input: { name, description: description || undefined } }, {
-      onSuccess: () => setEditingId(null),
-    })
-  }
+    if (!name.trim()) return;
+    updateMutation.mutate(
+      { id, input: { name, description: description || undefined } },
+      {
+        onSuccess: () => setEditingId(null),
+      },
+    );
+  };
 
-  const startEdit = (tag: { id: string; name: string; description?: string }) => {
-    setEditingId(tag.id)
-    setName(tag.name)
-    setDescription(tag.description || '')
-  }
+  const startEdit = (tag: {
+    id: string;
+    name: string;
+    description?: string;
+  }) => {
+    setEditingId(tag.id);
+    setName(tag.name);
+    setDescription(tag.description || "");
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 max-h-[80vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">标签管理</h2>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
             <X size={18} />
           </button>
         </div>
@@ -82,31 +100,42 @@ export default function TagManager({ onClose }: Props) {
                 className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50"
               >
                 {editingId === tag.id ? (
-                  <div className="flex-1 flex gap-2">
+                  <div className="flex-1 flex flex-col gap-2">
                     <input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="flex-1 px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                      placeholder="标签名称"
+                      className="px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 outline-none focus:ring-1 focus:ring-green-500"
                     />
-                    <button
-                      onClick={() => handleUpdate(tag.id)}
-                      className="text-xs px-2 py-1 rounded bg-green-500 text-white"
-                    >
-                      保存
-                    </button>
-                    <button
-                      onClick={() => setEditingId(null)}
-                      className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600"
-                    >
-                      取消
-                    </button>
+                    <input
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="描述（可选）"
+                      className="px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 outline-none focus:ring-1 focus:ring-green-500"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleUpdate(tag.id)}
+                        className="text-xs px-2 py-1 rounded bg-green-500 text-white"
+                      >
+                        保存
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600"
+                      >
+                        取消
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <>
                     <div>
                       <div className="text-sm font-medium">{tag.name}</div>
                       {tag.description && (
-                        <div className="text-xs text-gray-500">{tag.description}</div>
+                        <div className="text-xs text-gray-500">
+                          {tag.description}
+                        </div>
                       )}
                     </div>
                     <div className="flex gap-1">
@@ -131,5 +160,5 @@ export default function TagManager({ onClose }: Props) {
         )}
       </div>
     </div>
-  )
+  );
 }
