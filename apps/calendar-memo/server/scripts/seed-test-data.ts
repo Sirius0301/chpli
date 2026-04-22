@@ -5,7 +5,7 @@
  */
 
 import { PrismaClient, Priority, RepeatType, RepeatEndType } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 

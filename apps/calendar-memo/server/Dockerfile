@@ -7,6 +7,7 @@ WORKDIR /app
 
 # Copy workspace files
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY packages/auth-shared ./packages/auth-shared
 COPY apps/calendar-memo/shared ./apps/calendar-memo/shared
 COPY apps/calendar-memo/server/package.json ./apps/calendar-memo/server/
 
@@ -14,6 +15,7 @@ COPY apps/calendar-memo/server/package.json ./apps/calendar-memo/server/
 RUN pnpm install --frozen-lockfile
 
 # Copy source code
+COPY packages/auth-shared ./packages/auth-shared
 COPY apps/calendar-memo/shared ./apps/calendar-memo/shared
 COPY apps/calendar-memo/server ./apps/calendar-memo/server
 

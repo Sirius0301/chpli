@@ -75,7 +75,29 @@ services:
       - migrate # 只在指定时运行: docker-compose --profile migrate up db-migrate
     restart: "no" # 只运行一次，不重启
 
-  # Backend Server
+  # User Manager - 统一用户认证服务
+  user-manager:
+    build:
+      context: .
+      dockerfile: apps/user-manager/server/Dockerfile
+    container_name: chpli-user-manager
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-chpli}:${POSTGRES_PASSWORD:-chpli_secret}@postgres:5432/${POSTGRES_DB:-chpli}?schema=public
+      - PORT=3002
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+    ports:
+      - "${USER_MANAGER_PORT:-3002}:3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - chpli-network
+
+  # Calendar Memo - Backend Server
   server:
     build:
       context: .
@@ -87,18 +109,21 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-chpli}:${POSTGRES_PASSWORD:-chpli_secret}@postgres:5432/${POSTGRES_DB:-chpli}?schema=public
       - PORT=3001
       - JWT_SECRET=${JWT_SECRET:-your-secret-key}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
     ports:
       - "${SERVER_PORT:-3001}:3001"
     depends_on:
       postgres:
         condition: service_healthy
+      user-manager:
+        condition: service_started
       # db-migrate 不是强依赖，server 可以独立启动
     networks:
       - chpli-network
 
-  # Web Frontend
-  web:
+  # Calendar Memo - Web Frontend
+  calendar-memo-web:
     build:
       context: .
       dockerfile: apps/calendar-memo/web/Dockerfile
@@ -106,12 +131,28 @@ services:
         - VITE_API_URL=${VITE_API_URL:-http://localhost:3001}
     expose:
       - "80"
-    container_name: chpli-web
+    container_name: chpli-calendar-memo-web
     restart: unless-stopped
-    # ports:
-    #   - "${WEB_PORT:-5173}:80"
     depends_on:
       - server
+      - user-manager
+    networks:
+      - chpli-network
+
+  # Portal - 统一入口前端
+  portal-web:
+    build:
+      context: .
+      dockerfile: apps/portal/web/Dockerfile
+    expose:
+      - "80"
+    container_name: chpli-portal-web
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - user-manager
+      - calendar-memo-web
     networks:
       - chpli-network
 
@@ -127,7 +168,10 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - web
+      - portal-web
+      - calendar-memo-web
+      - server
+      - user-manager
     networks:
       - chpli-network
 

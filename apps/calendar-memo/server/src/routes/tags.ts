@@ -1,7 +1,7 @@
 import { Router, type Router as RouterType } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db/prisma';
-import { authMiddleware } from './auth';
+import { authMiddleware } from '@chpli/auth-shared';
 
 const router: RouterType = Router();
 

@@ -1,59 +1,11 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-// 用户表
-model User {
-  id           String    @id @default(uuid())
-  email        String?   @unique
-  phone        String?   @unique
-  password     String
-  name         String
-  avatar       String?
-  isActive     Boolean   @default(true)
-  lastLoginAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  // 关联 - 级联删除：用户删除时删除其所有标签和备忘录
-  memos        Memo[]
-  tags         Tag[]
-  verificationCodes VerificationCode[]
-
-  @@index([email])
-  @@index([phone])
-  @@map("users")
-}
-
-// 验证码表
-model VerificationCode {
-  id        String   @id @default(uuid())
-  email     String?
-  phone     String?
-  code      String   @db.VarChar(6)
-  type      CodeType
-  expiresAt DateTime
-  isUsed    Boolean  @default(false)
-  usedAt    DateTime?
-  createdAt DateTime @default(now())
-  
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([email, type, createdAt])
-  @@index([phone, type, createdAt])
-  @@map("verification_codes")
-}
-
-enum CodeType {
-  REGISTER
-  RESET_PASSWORD
-  CHANGE_PASSWORD
 }
 
 // 备忘录表
@@ -70,23 +22,22 @@ model Memo {
   customDays    Int[]         @default([])  // 自定义重复的天数 [0,1,2,3,4,5,6] 代表周日到周六
   priority      Priority?
   imageUrl      String?
-  
-  // 关联用户 - 级联删除
+
+  // 用户标识（由 user-manager 服务管理，此处仅为字符串字段）
   userId        String
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   // 关联标签 - 解除关联不删除
   tags          Tag[]
-  
+
   // 关联完成状态记录
   completions   MemoCompletion[]
-  
+
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
   @@index([userId, date])
   @@index([userId, completed])
-  @@map("memos")
+  @@map("cm_memos")
 }
 
 // 备忘录完成状态表 - 用于记录重复备忘录在特定日期的完成状态
@@ -102,7 +53,7 @@ model MemoCompletion {
   // 同一备忘录在同一日期的完成状态唯一
   @@unique([memoId, instanceDate])
   @@index([memoId, instanceDate])
-  @@map("memo_completions")
+  @@map("cm_memo_completions")
 }
 
 // 标签表 - 用户私有化
@@ -110,21 +61,20 @@ model Tag {
   id        String   @id @default(uuid())
   name      String
   color     String?
-  
-  // 关联用户 - 级联删除
+
+  // 用户标识（由 user-manager 服务管理，此处仅为字符串字段）
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   // 关联备忘录 - 删除标签时解除关联，不删备忘录
   memos     Memo[]
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // 同一用户标签名唯一
   @@unique([userId, name])
   @@index([userId])
-  @@map("tags")
+  @@map("cm_tags")
 }
 
 enum RepeatType {

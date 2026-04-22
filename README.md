@@ -1,331 +1,262 @@
-# Calendar Memo
+# Chpli Monorepo
 
-日历备忘录应用，支持创建、管理和筛选备忘录，包含重复规则和标签系统。
+> 个人生产力套件 — 统一入口、日历备忘录、书签管理
 
-## 快速开始
+## 项目概述
 
-### 方式一：使用 start.sh 脚本（推荐）
+Chpli 是一个基于 pnpm workspace 的 monorepo 项目，包含多个个人生产力应用：
 
-```bash
-# 1. 安装新依赖（如果有 package.json 变更）
-pnpm install
-cd apps/calendar-memo/server && pnpm install
-cd ../web && pnpm install
+| 应用 | 路径 | 说明 |
+|------|------|------|
+| **Portal** | `apps/portal/web` | 统一入口前端，单点登录，iframe 集成子应用 |
+| **Calendar Memo** | `apps/calendar-memo` | 日历备忘录（Web + Server），支持重复提醒、标签、完成追踪 |
+| **Bookmark Manager** | `apps/bookmark-manager` | 书签管理（Web + Server），支持标签分类、回收站、导入导出 |
+| **User Manager** | `apps/user-manager/server` | 统一用户认证服务，JWT 签发与验证 |
 
-# 2. 重新生成 Prisma Client（如果 schema 有变更）
-cd ../server
-npx prisma generate
-npx prisma db push --accept-data-loss
+## 技术架构
 
-# 3. 重启服务
-# 先停止旧进程
-./stop.sh
-# 或手动杀进程
-lsof -ti:3001 | xargs kill -9
-lsof -ti:5173 | xargs kill -9
-
-# 4. 重新启动
-./start.sh
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  Portal Web │     │ Calendar Web│     │ Bookmark Web│
+│  (React+Vite)     │  (React+Vite)     │  (React+Vite)
+└──────┬──────┘     └──────┬──────┘     └──────┬──────┘
+       │                   │                   │
+       └───────────────────┼───────────────────┘
+                           │
+       ┌───────────────────┼───────────────────┐
+       │                   │                   │
+┌──────▼──────┐     ┌──────▼──────┐     ┌──────▼──────┐
+│ User Manager│     │ Calendar    │     │ Bookmark    │
+│ (Express)   │     │ Server      │     │ Server      │
+│ Port 3002   │     │ (Express)   │     │ (FastAPI)   │
+└──────┬──────┘     │ Port 3001   │     │ Port 8001   │
+       │            └──────┬──────┘     └──────┬──────┘
+       │                   │                   │
+       └───────────────────┼───────────────────┘
+                           │
+                    ┌──────▼──────┐
+                    │  PostgreSQL │
+                    │   Port 5432 │
+                    └─────────────┘
 ```
 
-### 关键提醒
-
-| 场景 | 操作 |
-|------|------|
-| **只改了前端代码** | Docker 下只需 `docker-compose build --no-cache web && docker-compose up -d web` |
-| **只改了后端代码** | Docker 下只需 `docker-compose build --no-cache server && docker-compose up -d server` |
-| **改了数据库 Schema** | 本地需要 `npx prisma generate && npx prisma db push`；Docker 下会自动执行 |
-| **从旧版本升级** | 可能需要运行数据迁移：`docker-compose --profile migrate up db-migrate` |
-
-
-### 方式二：手动启动
-
-```bash
-# 1. 安装依赖
-pnpm install
-
-# 2. 启动数据库
-docker-compose up -d postgres
-
-# 3. 初始化数据库
-cd apps/calendar-memo/server
-npx prisma generate
-npx prisma db push --accept-data-loss
-
-# 4. 启动后端（终端1）
-pnpm dev
-
-# 5. 启动前端（终端2）
-cd apps/calendar-memo/web
-pnpm dev
-```
-
-访问 http://localhost:5173
-
-### 方式三：手动启动
-
-```bash
-# 1. 拉取最新代码
-git pull origin main   # 根据你的仓库调整
-
-# 2. 停止旧容器
-docker-compose down
-
-# 3. 重新构建镜像（不用缓存，确保新代码被打包）
-docker-compose build --no-cache web server
-
-# 4. 启动服务
-docker-compose up -d
-
-# 5. 查看状态
-docker-compose ps
-docker-compose logs -f
-```
-
-
-
-### Docker 部署
-
-```bash
-# 创建环境变量文件
-cp .env.example .env
-# 编辑 .env 配置你的数据库密码和JWT密钥
-
-# 1. 启动数据库
-docker-compose up -d postgres
-
-# 2. （可选）运行数据迁移 - 为已完成的备忘录生成 completion 记录
-docker-compose --profile migrate up db-migrate
-
-# 3. 启动所有服务
-docker-compose up -d
-
-# 查看日志
-docker-compose logs -f
-```
-
-访问 http://localhost
-
-#### 数据迁移说明
-
-如果从旧版本升级，需要运行数据迁移脚本将已完成备忘录的完成状态迁移到新系统。迁移脚本会：
-
-- **非重复备忘录**：创建一个 completion 记录
-- **重复备忘录**：创建从开始日期到 updatedAt 之间的所有实例的 completion 记录
-
-```bash
-# 使用 Docker Compose 运行迁移（推荐）
-docker-compose --profile migrate up db-migrate
-
-# 或在本地运行
-cd apps/calendar-memo/server
-pnpm migrate:completions
-```
-
----
-
-## 本地开发调试指南
-
-### 常用命令
-
-```bash
-# 查看后端日志
-tail -f logs/server.log
-
-# 查看数据库
-psql postgresql://chpli:chpli_secret@localhost:5432/chpli
-
-# 重启后端
-pkill -f "tsx watch"
-cd apps/calendar-memo/server && pnpm dev
-
-# 重启前端
-# 按 Ctrl+C 停止，然后重新运行 pnpm dev
-```
-
-### 端口占用问题
-
-如果遇到 "端口已被占用" 错误：
-
-```bash
-# 查找占用 3001 端口的进程
-lsof -ti:3001
-
-# 强制结束占用端口的进程
-lsof -ti:3001 | xargs kill -9
-lsof -ti:5173 | xargs kill -9
-
-# 或者使用 stop.sh
-./stop.sh
-```
-
-### 数据库调试
-
-```bash
-# 进入数据库容器
-docker exec -it chpli-postgres psql -U chpli -d chpli
-
-# 常用 SQL 查询
-\dt                    # 查看所有表
-SELECT * FROM users;   # 查看用户
-SELECT * FROM memos;   # 查看备忘录
-SELECT * FROM tags;    # 查看标签
-\q                     # 退出
-
-# 重置数据库（会丢失数据）
-docker-compose down -v
-docker-compose up -d postgres
-```
-
-### 后端调试
-
-```bash
-# 查看实时日志
-tail -f /tmp/chpli-server.log
-
-# 测试 API
-curl http://localhost:3001/api/health
-
-# 带认证的 API 测试
-TOKEN=$(curl -s -X POST http://localhost:3001/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"Test123!@#"}' | \
-  grep -o '"token":"[^"]*"' | cut -d'"' -f4)
-
-curl http://localhost:3001/api/memos \
-  -H "Authorization: Bearer $TOKEN"
-```
-
-### 前端调试
-
-```bash
-# 浏览器开发者工具
-# F12 或 Cmd+Option+I (Mac)
-
-# 查看网络请求
-# 在 Network 标签页查看 API 请求
-
-# 查看应用状态
-# 在 Console 输入:
-JSON.parse(localStorage.getItem('calendar-memo-storage'))
-```
-
-### 常见问题
-
-#### 1. 后端启动失败 "EADDRINUSE"
-
-**原因**: 端口 3001 被占用
-
-**解决**:
-```bash
-lsof -ti:3001 | xargs kill -9
-./start.sh
-```
-
-#### 2. 数据库连接失败
-
-**原因**: PostgreSQL 未启动或配置错误
-
-**解决**:
-```bash
-# 检查数据库状态
-docker ps | grep postgres
-
-# 重启数据库
-docker-compose restart postgres
-
-# 检查环境变量
-cat apps/calendar-memo/server/.env
-```
-
-#### 3. Prisma Client 未生成
-
-**解决**:
-```bash
-cd apps/calendar-memo/server
-npx prisma generate
-```
-
-#### 4. 前端无法连接后端（CORS 错误）
-
-**原因**: 后端 CORS 配置问题
-
-**解决**: 检查后端 `.env` 中的 `CORS_ORIGIN`，确保包含前端地址：
-```bash
-# apps/calendar-memo/server/.env
-CORS_ORIGIN=http://localhost:5173
-```
-
-#### 5. 验证码发送失败
-
-**原因**: 开发环境默认不发送真实验证码
-
-**解决**: 直接在数据库插入验证码：
-```bash
-docker exec chpli-postgres psql -U chpli -d chpli -c "
-INSERT INTO verification_codes (id, email, code, type, \"expiresAt\", \"isUsed\", \"createdAt\")
-VALUES (gen_random_uuid()::text, 'test@example.com', '123456', 'REGISTER', NOW() + INTERVAL '10 minutes', false, NOW());
-"
-```
-
----
+| 层级 | 技术栈 |
+|------|--------|
+| **前端** | React 18 + TypeScript + Vite + TailwindCSS + react-router-dom |
+| **前端状态** | Zustand (Calendar), React Query (Bookmark), Context (Portal Auth) |
+| **Node 后端** | Express 4 + Prisma 5 + PostgreSQL |
+| **Python 后端** | FastAPI + SQLAlchemy (async) + Alembic + PostgreSQL |
+| **认证** | JWT (jsonwebtoken) + bcryptjs，共享 `@chpli/auth-shared` |
+| **部署** | Docker Compose + Caddy 反向代理 |
+| **包管理** | pnpm 10 Workspaces |
 
 ## 项目结构
 
 ```
 .
-├── apps/calendar-memo/
-│   ├── server/          # 后端 (Express + Prisma)
-│   │   ├── src/
-│   │   │   ├── routes/      # API 路由
-│   │   │   ├── db/prisma.ts # 数据库连接
-│   │   │   └── index.ts     # 入口文件
-│   │   ├── prisma/
-│   │   │   └── schema.prisma
-│   │   └── Dockerfile
-│   ├── web/             # 前端 (React + Vite)
-│   │   ├── src/
-│   │   │   ├── pages/       # 页面组件
-│   │   │   ├── components/  # UI 组件
-│   │   │   ├── stores/      # 状态管理
-│   │   │   └── utils/       # 工具函数
-│   │   └── Dockerfile
-│   └── shared/          # 共享类型
-├── docker-compose.yml   # 生产环境配置
-├── docker-compose.dev.yml # 开发环境配置
-├── start.sh             # 本地开发启动脚本
-├── stop.sh              # 停止服务脚本
-└── .env.example         # 环境变量模板
+├── apps/
+│   ├── bookmark-manager/
+│   │   ├── server/          # FastAPI + Alembic + asyncpg
+│   │   └── web/             # React + Vite + React Query
+│   ├── calendar-memo/
+│   │   ├── server/          # Express + Prisma
+│   │   ├── web/             # React + Vite + Zustand
+│   │   └── shared/          # 共享类型定义
+│   ├── portal/
+│   │   └── web/             # 统一入口 React 应用
+│   └── user-manager/
+│       └── server/          # 统一认证 Express 服务
+├── packages/
+│   └── auth-shared/         # JWT 工具 + Express 认证中间件
+├── scripts/
+│   ├── start-local.sh       # 本地一键启动所有服务
+│   ├── stop-local.sh        # 停止所有服务
+│   ├── logs.sh              # 查看服务日志
+│   └── seed.sh              # 填充测试数据
+├── docker-compose.yml       # 生产/完整部署
+├── docker-compose.dev.yml   # 开发环境容器化
+├── Caddyfile                # 反向代理配置
+└── mermaid.md               # 系统架构图（C4 + 序列图）
 ```
 
----
+## 快速开始
+
+### 方式一：本地脚本（推荐日常开发）
+
+依赖：Docker、pnpm、Python 3.12+
+
+```bash
+# 1. 安装依赖
+pnpm install
+
+# 2. 一键启动所有服务（PostgreSQL + 3个后端 + 3个前端）
+./scripts/start-local.sh
+
+# 3. 填充测试数据
+./scripts/seed.sh
+```
+
+启动后会显示所有服务的访问地址：
+- Portal（统一入口）: http://localhost:5173
+- Calendar Memo: http://localhost:5175
+- Bookmark Manager: http://localhost:5174
+
+**常用命令：**
+```bash
+# 停止所有服务
+./scripts/stop-local.sh
+
+# 查看日志
+./scripts/logs.sh -a          # 跟踪所有
+./scripts/logs.sh -s          # 查看状态
+./scripts/logs.sh user-manager # 单个服务
+
+# 只启动数据库
+./scripts/start-local.sh db
+```
+
+### 方式二：Docker Compose（环境一致性）
+
+```bash
+# 1. 创建环境变量
+cp .env.example .env
+
+# 2. 启动全部服务
+docker-compose -f docker-compose.dev.yml up -d
+
+# 3. 填充测试数据
+./scripts/seed.sh
+```
+
+### 方式三：单独启动某个应用
+
+```bash
+# 启动 PostgreSQL
+docker-compose up -d postgres
+
+# Calendar Memo（前后端）
+pnpm run dev:calendar
+
+# User Manager（仅后端）
+pnpm run dev:user-manager
+
+# Portal（仅前端）
+pnpm run dev:portal
+```
 
 ## 环境变量
 
+复制 `.env.example` 为 `.env` 并根据需要修改：
+
 ```bash
-# 数据库
-POSTGRES_USER=chpli
-POSTGRES_PASSWORD=your_password
-POSTGRES_DB=chpli
-DATABASE_URL=postgresql://user:pass@localhost:5432/chpli?schema=public
-
-# JWT
-JWT_SECRET=your_jwt_secret
-
-# 前端API地址
-VITE_API_URL=http://localhost:3001
-
-# CORS（开发环境设为*允许所有）
-CORS_ORIGIN=http://localhost:5173
+cp .env.example .env
 ```
 
----
+| 变量 | 说明 | 默认值 |
+|------|------|--------|
+| `DATABASE_URL` | PostgreSQL 连接字符串 | `postgresql://chpli:chpli_secret@localhost:5432/chpli` |
+| `JWT_SECRET` | JWT 签名密钥（生产必须修改） | `your-super-secret-jwt-key...` |
+| `USER_MANAGER_PORT` | 认证服务端口 | 3002 |
+| `CALENDAR_MEMO_SERVER_PORT` | Calendar 后端端口 | 3001 |
+| `BOOKMARK_MANAGER_SERVER_PORT` | Bookmark 后端端口 | 8001 |
+| `PORTAL_WEB_PORT` | Portal 前端端口 | 5173 |
+| `CALENDAR_MEMO_WEB_PORT` | Calendar 前端端口 | 5175 |
+| `BOOKMARK_MANAGER_WEB_PORT` | Bookmark 前端端口 | 5174 |
 
-## 技术栈
+> 生产环境必须修改 `JWT_SECRET`，建议使用 `openssl rand -base64 32` 生成。
 
-- **后端**: Node.js, Express, Prisma, PostgreSQL
-- **前端**: React, TypeScript, Vite, TailwindCSS, Zustand
-- **部署**: Docker, Docker Compose
+## 测试账号
+
+运行 `./scripts/seed.sh` 后会生成以下测试账号：
+
+| 账号 | 密码 |
+|------|------|
+| `test@example.com` | `Test123!@#` |
+
+## 端口速查
+
+| 服务 | 端口 | 说明 |
+|------|------|------|
+| Portal Web | 5173 | 统一入口 |
+| Calendar Memo Web | 5175 | 日历前端 |
+| Bookmark Web | 5174 | 书签前端 |
+| User Manager API | 3002 | 认证服务 `/api/auth/*` |
+| Calendar Memo API | 3001 | 备忘录服务 `/api/memos/*` |
+| Bookmark API | 8001 | 书签服务 `/api/v1/*` |
+| PostgreSQL | 5432 | 数据库 |
+
+## 开发指南
+
+### 添加新应用
+
+1. 在 `apps/` 下创建目录
+2. 在 `pnpm-workspace.yaml` 中添加包路径
+3. 运行 `pnpm install` 安装依赖
+
+### 数据库操作
+
+```bash
+# Calendar Memo
+cd apps/calendar-memo/server
+npx prisma generate      # 生成 Prisma Client
+npx prisma db push       # 同步 schema 到数据库（开发环境）
+npx prisma studio        # 可视化数据管理
+
+# User Manager
+cd apps/user-manager/server
+npx prisma generate
+npx prisma db push
+
+# Bookmark Manager
+cd apps/bookmark-manager/server
+alembic upgrade head      # 应用迁移
+alembic revision --autogenerate -m "desc"  # 创建新迁移
+```
+
+> ⚠️ **注意**：User Manager 和 Calendar Memo 共享同一个 PostgreSQL 数据库，但使用不同的表前缀（`um_` / `cm_`）。初始化时通过合并 schema 一次性 push，避免 `prisma db push` 互相删除对方表。
+
+### 认证流程
+
+1. 用户通过 Portal 登录 → User Manager 签发 JWT
+2. Portal 通过 `postMessage` 向 iframe 子应用传递 Token
+3. 各后端通过 `@chpli/auth-shared` 中的 `authMiddleware` 离线验证 JWT
+
+### 验证码服务（本地 Mock）
+
+开发环境已内置 mock：
+- `POST /api/auth/send-code` 在 `NODE_ENV=development` 时直接返回 `code` 字段
+- 前端自动填充验证码，无需真实短信/邮件
+
+生产环境配置腾讯云 SES/SMS：
+```bash
+TENCENT_SECRET_ID=xxx
+TENCENT_SECRET_KEY=xxx
+SMS_SIGN_NAME=xxx
+SMS_TEMPLATE_ID=xxx
+SES_FROM_EMAIL=xxx
+```
+
+## 部署
+
+```bash
+# 生产部署（Caddy + 所有服务）
+docker-compose up -d
+
+# 查看状态
+docker-compose ps
+docker-compose logs -f
+```
+
+## 文档索引
+
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| 架构图 | [mermaid.md](./mermaid.md) | C4 上下文/容器/组件图 + 交互序列图 |
+| Calendar Memo 教程 | [apps/calendar-memo/TUTORIAL.md](./apps/calendar-memo/TUTORIAL.md) | 全栈开发学习教程 |
+| 数据迁移 | [MIGRATE.md](./MIGRATE.md) | memo completions 迁移指南 |
+| 国际化 | [apps/calendar-memo/web/I18N_GUIDE.md](./apps/calendar-memo/web/I18N_GUIDE.md) | i18n 实现指南 |
+| Bookmark 迁移 | [apps/bookmark-manager/server/README.md](./apps/bookmark-manager/server/README.md) | Alembic 使用说明 |
+| 测试数据 | [apps/calendar-memo/server/scripts/TEST_DATA_GUIDE.md](./apps/calendar-memo/server/scripts/TEST_DATA_GUIDE.md) | Calendar Memo 测试场景 |
 
 ## License
 

@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表
+model User {
+  id           String    @id @default(uuid())
+  email        String?   @unique
+  phone        String?   @unique
+  password     String
+  name         String
+  avatar       String?
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  verificationCodes VerificationCode[]
+
+  @@index([email])
+  @@index([phone])
+  @@map("um_users")
+}
+
+// 验证码表
+model VerificationCode {
+  id        String   @id @default(uuid())
+  email     String?
+  phone     String?
+  code      String   @db.VarChar(6)
+  type      CodeType
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email, type, createdAt])
+  @@index([phone, type, createdAt])
+  @@map("um_verification_codes")
+}
+
+enum CodeType {
+  REGISTER
+  RESET_PASSWORD
+  CHANGE_PASSWORD
+}

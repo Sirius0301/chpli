@@ -5,7 +5,7 @@ import { join } from 'path';
 import memosRouter from './routes/memoes';
 import tagsRouter from './routes/tags';
 import uploadRouter from './routes/upload';
-import authRouter from './routes/auth';
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -33,7 +33,6 @@ app.get('/health', (_req, res) => {
 });
 
 // API 路由
-app.use('/api/auth', authRouter);
 app.use('/api/memos', memosRouter);
 app.use('/api/tags', tagsRouter);
 app.use('/api/upload', uploadRouter);

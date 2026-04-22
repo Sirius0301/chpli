@@ -10,13 +10,23 @@
   "scripts": {
     "dev": "pnpm run --parallel dev",
     "dev:calendar": "pnpm --filter '@chpli/calendar-memo-*' --parallel dev",
+    "dev:user-manager": "pnpm --filter @chpli/user-manager-server dev",
+    "dev:portal": "pnpm --filter @chpli/portal-web dev",
     "build": "pnpm -r build",
     "start": "pnpm --filter @chpli/calendar-memo start",
     "lint": "pnpm -r lint",
     "type-check": "pnpm -r type-check",
     "db:up": "docker-compose up -d postgres",
     "db:down": "docker-compose down",
-    "db:logs": "docker-compose logs -f postgres"
+    "db:logs": "docker-compose logs -f postgres",
+    "start:local": "./scripts/start-local.sh",
+    "start:local:db": "./scripts/start-local.sh db",
+    "start:local:backend": "./scripts/start-local.sh backend",
+    "start:local:frontend": "./scripts/start-local.sh frontend",
+    "stop:local": "./scripts/stop-local.sh",
+    "logs:local": "./scripts/logs.sh",
+    "dev:docker": "docker-compose -f docker-compose.dev.yml up",
+    "seed": "./scripts/seed.sh"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

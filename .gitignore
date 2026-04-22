@@ -1,48 +1,90 @@
+# ==========================================
 # Dependencies
+# ==========================================
 node_modules/
 .pnpm-store/
 
+# ==========================================
 # Build outputs
+# ==========================================
 dist/
 dist-ssr/
 build/
 *.tsbuildinfo
 
-# Environment variables
+# ==========================================
+# Environment variables (all levels)
+# ==========================================
 .env
 .env.local
 .env.*.local
+**/.env
+**/.env.local
 
-# IDE
+# ==========================================
+# IDE & Editor
+# ==========================================
 .vscode/
 .idea/
 *.swp
 *.swo
 
+# ==========================================
 # OS files
+# ==========================================
 .DS_Store
+**/.DS_Store
 Thumbs.db
 
+# ==========================================
 # Logs
+# ==========================================
+logs/
 *.log
 npm-debug.log*
+nohup.out
 
-# Uploads
+# ==========================================
+# Uploads (keep .gitkeep for directory structure)
+# ==========================================
 apps/calendar-memo/server/uploads/*
 !apps/calendar-memo/server/uploads/.gitkeep
 
-# Logs
-logs/
-*.log
-nohup.out
-
-# Docker volumes
+# ==========================================
+# Docker volumes & temp
+# ==========================================
 volumes/
 data/
-
-# Temp files
 .cache/
 .tmp/
 tmp/
 temp/
 draft/
+
+# ==========================================
+# Python
+# ==========================================
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+**/.venv/
+
+# ==========================================
+# Prisma generated clients
+# ==========================================
+**/generated/prisma/
+
+# ==========================================
+# Sub-project lockfiles (root pnpm-lock.yaml is managed by workspace)
+# ==========================================
+apps/**/pnpm-lock.yaml
+packages/**/pnpm-lock.yaml
+
+# ==========================================
+# Misc
+# ==========================================
+coverage/
+*.pid

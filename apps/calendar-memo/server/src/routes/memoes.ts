@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { existsSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { prisma } from '../db/prisma';
-import { authMiddleware } from './auth';
+import { authMiddleware } from '@chpli/auth-shared';
 
 const router: RouterType = Router();
 
