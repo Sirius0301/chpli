@@ -386,9 +386,27 @@ async def import_bookmarks(
     return {"detail": f"成功导入 {imported_count} 个书签"}
 
 
+_FALLBACK_QUOTES = [
+    {"text": "The journey of a thousand miles begins with one step.", "author": "Lao Tzu"},
+    {"text": "Life is what happens when you're busy making other plans.", "author": "John Lennon"},
+    {"text": "The only way to do great work is to love what you do.", "author": "Steve Jobs"},
+    {"text": "In the middle of every difficulty lies opportunity.", "author": "Albert Einstein"},
+    {"text": "It does not matter how slowly you go as long as you do not stop.", "author": "Confucius"},
+    {"text": "Everything you've ever wanted is on the other side of fear.", "author": "George Addair"},
+    {"text": "Success is not final, failure is not fatal: it is the courage to continue that counts.", "author": "Winston Churchill"},
+]
+
 @router.get("/daily-quote")
 async def get_daily_quote():
-    async with httpx.AsyncClient() as client:
-        resp = await client.get("https://zenquotes.io/api/random", timeout=10)
-        data = resp.json()
-        return {"text": data[0]["q"], "author": data[0]["a"]}
+    import random
+    from datetime import date
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get("https://zenquotes.io/api/random", timeout=5)
+            resp.raise_for_status()
+            data = resp.json()
+            return {"text": data[0]["q"], "author": data[0]["a"]}
+    except Exception:
+        # Use a deterministic fallback quote based on the day
+        idx = date.today().toordinal() % len(_FALLBACK_QUOTES)
+        return _FALLBACK_QUOTES[idx]
