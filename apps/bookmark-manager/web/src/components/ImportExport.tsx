@@ -1,29 +1,41 @@
 import { useRef } from 'react'
-import { useImportBookmarks, useExportBookmarks } from '@/hooks/useBookmarks'
+import { useImportBookmarks } from '@/hooks/useBookmarks'
+import api from '@/api/client'
 import { Download, Upload } from 'lucide-react'
 
 export default function ImportExport() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const importMutation = useImportBookmarks()
-  const { refetch: exportData } = useExportBookmarks()
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    importMutation.mutate(file)
+    importMutation.mutate(file, {
+      onSuccess: (res: any) => {
+        alert(res.data?.detail || '导入成功')
+      },
+      onError: (err: any) => {
+        alert(err.response?.data?.detail || '导入失败')
+      },
+    })
     e.target.value = ''
   }
 
   const handleExport = async () => {
-    const { data } = await exportData()
-    if (!data) return
-    const blob = new Blob([JSON.stringify(data.data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `bookmarks-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+    try {
+      const response = await api.get('/bookmarks/export/html/', {
+        responseType: 'blob',
+      })
+      const blob = new Blob([response.data], { type: 'text/html' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `bookmarks-${new Date().toISOString().slice(0, 10)}.html`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('导出失败')
+    }
   }
 
   return (

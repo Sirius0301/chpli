@@ -50,6 +50,23 @@ Chpli 是一个基于 pnpm workspace 的 monorepo 项目，包含多个个人生
 | **部署** | Docker Compose + Caddy 反向代理 |
 | **包管理** | pnpm 10 Workspaces |
 
+## 数据库表结构
+
+| 表名 | 归属服务 | 说明 |
+|------|---------|------|
+| `um_users` | User Manager | 统一用户表（邮箱、手机号、密码） |
+| `cm_memos` | Calendar Memo | 备忘录主表 |
+| `cm_tags` | Calendar Memo | 备忘录标签表 |
+| `_MemoToTag` | Calendar Memo | Prisma 隐式多对多关联表（`cm_memos` ↔ `cm_tags`） |
+| `cm_users` | Calendar Memo | 已弃用（保留历史数据，统一使用 `um_users`） |
+| `bm_bookmarks` | Bookmark Manager | 书签主表 |
+| `bm_tags` | Bookmark Manager | 书签标签表 |
+| `bm_bookmark_tags` | Bookmark Manager | SQLAlchemy 多对多关联表（`bm_bookmarks` ↔ `bm_tags`） |
+| `bm_user_clicks` | Bookmark Manager | 用户点击记录表 |
+| `alembic_version` | Bookmark Manager | Alembic 数据库迁移版本控制表 |
+
+> 所有服务共享同一个 PostgreSQL 数据库，通过表前缀区分：`um_`（User Manager）、`cm_`（Calendar Memo）、`bm_`（Bookmark Manager）。`_MemoToTag` 和 `alembic_version` 为 ORM/迁移框架自动生成的系统表。
+
 ## 项目结构
 
 ```

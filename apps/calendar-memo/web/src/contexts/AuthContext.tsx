@@ -14,18 +14,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
   logout: () => void;
-  sendCode: (email: string, type: string) => Promise<void>;
-}
-
-interface RegisterData {
-  email?: string;
-  phone?: string;
-  code: string;
-  password: string;
-  name: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,64 +24,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      fetchUser();
-    } else {
-      setIsLoading(false);
-    }
-  }, [token]);
-
-  const fetchUser = async () => {
-    try {
-      const response = await axios.get('/api/auth/me');
-      if (response.data.success) {
-        setUser(response.data.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch user info:', error);
-      logout();
-    } finally {
-      setIsLoading(false);
-    }
+  const applyToken = (t: string) => {
+    localStorage.setItem('token', t);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${t}`;
   };
 
-  const login = async (email: string, password: string) => {
-    const response = await axios.post('/api/auth/login', { email, password });
-    if (response.data.success) {
-      const { user, token } = response.data.data;
-      setUser(user);
-      setToken(token);
-      localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    }
-  };
-
-  const register = async (data: RegisterData) => {
-    const response = await axios.post('/api/auth/register', data);
-    if (response.data.success) {
-      const { user, token } = response.data.data;
-      setUser(user);
-      setToken(token);
-      localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    }
-  };
-
-  const logout = () => {
-    setUser(null);
-    setToken(null);
+  const clearToken = () => {
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
   };
 
-  const sendCode = async (email: string, type: string) => {
-    await axios.post('/api/auth/send-code', { email, type });
+  const fetchUser = async (t: string) => {
+    try {
+      applyToken(t);
+      const response = await axios.get('/api/auth/me');
+      if (response.data.success) {
+        setUser(response.data.data);
+      } else {
+        clearToken();
+        setUser(null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user info:', error);
+      clearToken();
+      setUser(null);
+    }
+  };
+
+  // 初始化：检查 localStorage 中已有 token
+  useEffect(() => {
+    const init = async () => {
+      const savedToken = localStorage.getItem('token');
+      if (savedToken) {
+        await fetchUser(savedToken);
+      }
+      setIsLoading(false);
+    };
+    init();
+  }, []);
+
+  // 监听 Portal 通过 postMessage 传递的 token
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      // 安全：只处理来自父窗口的消息
+      if (event.source !== window.parent) return;
+
+      const { type, token: newToken } = event.data || {};
+      if (type === 'AUTH_TOKEN' && newToken && newToken !== token) {
+        setIsLoading(true);
+        setToken(newToken);
+        await fetchUser(newToken);
+        setIsLoading(false);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [token]);
+
+  const logout = () => {
+    clearToken();
+    setUser(null);
+    setToken(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout, sendCode }}>
+    <AuthContext.Provider value={{ user, token, isLoading, logout }}>
       {children}
     </AuthContext.Provider>
   );

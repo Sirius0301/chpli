@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMemoStore } from '@/stores/memoStore';
 import { useI18n } from '@/i18n';
@@ -13,7 +12,6 @@ import { DetailPanel } from '@/components/DetailPanel';
 import { requestNotificationPermission, startReminderCheck, stopReminderCheck } from '@/utils/notifications';
 
 export const Home: React.FC = () => {
-  const navigate = useNavigate();
   const { t } = useI18n();
   const { user, isLoading } = useAuth();
   const { 
@@ -25,12 +23,6 @@ export const Home: React.FC = () => {
     isSidebarCollapsed,
     closeSidebar,
   } = useMemoStore();
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      navigate('/login');
-    }
-  }, [user, isLoading, navigate]);
 
   useEffect(() => {
     if (user) {
@@ -69,8 +61,16 @@ export const Home: React.FC = () => {
     );
   }
 
+  // 未登录时显示等待状态（等待 Portal 通过 postMessage 传递 token）
   if (!user) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="text-gray-600 mb-2">{t.loading}</div>
+          <p className="text-sm text-gray-400">等待认证...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
