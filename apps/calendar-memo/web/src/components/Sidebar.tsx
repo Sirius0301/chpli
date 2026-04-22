@@ -48,7 +48,7 @@ export function Sidebar({ isCollapsed = false, onToggleCollapse }: SidebarProps)
             window.location.href = 'http://localhost:5173'
           }
         }}
-        className={`flex items-center text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors border-b border-gray-200 ${collapsed ? 'justify-center px-2 py-3' : 'gap-2 px-6 py-3 text-sm'}`}
+        className={`flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors border-b border-gray-200 ${collapsed ? 'px-2 py-3' : 'gap-2 px-6 py-3 text-sm'}`}
         title={collapsed ? '返回首页' : undefined}
       >
         <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

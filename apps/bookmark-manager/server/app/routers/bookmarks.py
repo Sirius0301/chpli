@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from html.parser import HTMLParser
 from typing import List, Optional
 from uuid import UUID
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
@@ -383,3 +384,11 @@ async def import_bookmarks(
         imported_count += 1
 
     return {"detail": f"成功导入 {imported_count} 个书签"}
+
+
+@router.get("/daily-quote")
+async def get_daily_quote():
+    async with httpx.AsyncClient() as client:
+        resp = await client.get("https://zenquotes.io/api/random", timeout=10)
+        data = resp.json()
+        return {"text": data[0]["q"], "author": data[0]["a"]}
