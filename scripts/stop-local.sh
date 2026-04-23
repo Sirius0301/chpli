@@ -190,6 +190,9 @@ main() {
   else
     stop_single "$mode"
   fi
+  lsof -ti:3001 | xargs kill -9 >/dev/null 2>&1 || true
+  lsof -ti:3002 | xargs kill -9 >/dev/null 2>&1 || true
+  lsof -ti:5174 | xargs kill -9 >/dev/null 2>&1 || true
 
   echo ""
   log_ok "操作完成"
